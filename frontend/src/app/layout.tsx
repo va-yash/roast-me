@@ -1,0 +1,59 @@
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Roast-Me.me — Cosmic Damage Reports",
+  description:
+    "Enter your birth details. Receive a personalised Vedic roast. Share it with enemies.",
+  metadataBase: new URL("https://roast-me.me"),
+  openGraph: {
+    title: "Roast-Me.me",
+    description: "The cosmos have seen everything. And they have notes.",
+    url: "https://roast-me.me",
+    siteName: "Roast-Me.me",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Roast-Me.me — Cosmic Damage Reports",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Roast-Me.me",
+    description: "The cosmos have seen everything. And they have notes.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300;1,400;1,600&family=Inconsolata:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
