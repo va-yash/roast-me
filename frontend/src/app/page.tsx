@@ -11,7 +11,7 @@ interface RoastPattern {
 }
 
 interface RoastData {
-  villain_name: string;
+  cosmic_title: string;
   patterns: RoastPattern[];
 }
 
@@ -24,7 +24,7 @@ interface ChartSummary {
 }
 
 type Screen = "input" | "loading" | "result";
-type Intensity = "Mild" | "Spicy" | "No Mercy";
+type Intensity = "Gentle" | "Chaotic" | "Unhinged";
 
 const C = {
   bg:         "#09080F",
@@ -50,10 +50,10 @@ const LOADING_MSGS = [
   "Cross-referencing your patterns with the cosmos...",
   "Almost done. The planets are being thorough.",
   "Your chart is... a lot. Sit tight.",
-  "Preparing your cosmic damage report...",
+  "Preparing your cosmic portrait...",
 ];
 
-const INTENSITY_OPTIONS: Intensity[] = ["Mild", "Spicy", "No Mercy"];
+const INTENSITY_OPTIONS: Intensity[] = ["Gentle", "Chaotic", "Unhinged"];
 
 const GLOBAL_CSS = `
 .rm-input {
@@ -98,7 +98,7 @@ export default function Home() {
   const [dob, setDob]             = useState("");
   const [tob, setTob]             = useState("");
   const [pob, setPob]             = useState("");
-  const [intensity, setIntensity] = useState<Intensity>("No Mercy");
+  const [intensity, setIntensity] = useState<Intensity>("Unhinged");
   const [error, setError]         = useState("");
   const [msgIdx, setMsgIdx]       = useState(0);
   const [roastData, setRoastData] = useState<RoastData | null>(null);
@@ -270,7 +270,7 @@ export default function Home() {
   );
 
   const patterns    = roastData?.patterns ?? [];
-  const villainName = roastData?.villain_name ?? "Certified Cosmic Disaster";
+  const cosmicTitle = roastData?.cosmic_title ?? "Certified Chaos Architect";
   const lastIdx     = patterns.length - 1;
 
   return (
@@ -281,7 +281,7 @@ export default function Home() {
         <div className="rm-hero-anim" style={{ background: "linear-gradient(165deg, #0E0B1B 0%, #07060D 100%)", borderBottom: `1px solid ${C.goldBorder}`, padding: "3rem 1.75rem 2.25rem", textAlign: "center" }}>
           <div style={{ fontSize: 9, letterSpacing: "0.26em", color: C.gold, textTransform: "uppercase", fontWeight: 600, marginBottom: "1.1rem" }}>roast&#8209;me.me · your cosmic verdict</div>
           <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.55rem,4.5vw,2.25rem)", fontStyle: "italic", fontWeight: 400, color: C.text, lineHeight: 1.35, marginBottom: "1.5rem" }}>
-            &ldquo;{villainName}&rdquo;
+            &ldquo;{cosmicTitle}&rdquo;
           </h2>
           <div style={{ display: "flex", gap: 7, justifyContent: "center", flexWrap: "wrap", marginBottom: "1.75rem" }}>
             {[pob, `${intensity} mode`].map(tag => (
@@ -289,10 +289,10 @@ export default function Home() {
             ))}
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-            <GhostButton active={copied === "hero"} onClick={() => copyText("hero", `"${villainName}"\n\nget your own roast → roast-me.me`)}>
-              {copied === "hero" ? "✓ copied" : "copy villain name"}
+            <GhostButton active={copied === "hero"} onClick={() => copyText("hero", `"${cosmicTitle}"\n\nget your own reading → roast-me.me`)}>
+              {copied === "hero" ? "✓ copied" : "copy your title"}
             </GhostButton>
-            <GhostButton onClick={restart}>roast again</GhostButton>
+            <GhostButton onClick={restart}>read me again</GhostButton>
           </div>
         </div>
 
@@ -323,7 +323,7 @@ export default function Home() {
         </div>
 
         <div style={{ padding: "2rem 1rem 0", textAlign: "center" }}>
-          <p style={{ fontSize: 13, color: C.muted, marginBottom: "1.1rem", lineHeight: 1.65 }}>Know someone who deserves this?</p>
+          <p style={{ fontSize: 13, color: C.muted, marginBottom: "1.1rem", lineHeight: 1.65 }}>Know someone who needs to see themselves clearly?</p>
           <button onClick={restart} style={{ padding: "12px 28px", background: `linear-gradient(135deg, ${C.gold} 0%, #9A6B18 100%)`, border: "none", borderRadius: 8, color: "#07060D", fontSize: 14, fontFamily: "'Syne', sans-serif", fontWeight: 700, letterSpacing: "0.04em", cursor: "pointer" }}>
             Roast someone else →
           </button>
