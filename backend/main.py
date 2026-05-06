@@ -7,7 +7,7 @@ Environment variables (.env):
   OPENCAGE_API_KEY    = your_opencage_key
   ALLOWED_ORIGIN      = https://roast-me.me   (or * for dev)
   CLAUDE_MODEL        = claude-sonnet-4-6
-  MAX_TOKENS          = 2500
+  MAX_TOKENS          = 1500
 
 Run locally:
   uvicorn main:app --reload --port 8000
