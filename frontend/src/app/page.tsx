@@ -126,6 +126,28 @@ export default function Home() {
     return () => { if (msgTimerRef.current) clearInterval(msgTimerRef.current); };
   }, [screen]);
 
+  // Attempt to parse streamed JSON — recovers from truncated responses by
+  // closing any open string/array/object before parsing.
+  const tryParseRoast = (raw: string): RoastData | null => {
+    const text = raw.replace(/```json|```/g, "").trim();
+    // First try clean parse
+    try { return JSON.parse(text) as RoastData; } catch { /* fall through */ }
+    // Attempt repair: close open strings, arrays, objects
+    let fixed = text;
+    // Count unclosed quotes (ignoring escaped ones)
+    const unescapedQuotes = (fixed.match(/(?<!\\)"/g) || []).length;
+    if (unescapedQuotes % 2 !== 0) fixed += '"';
+    // Close open arrays/objects from innermost outward
+    const stack: string[] = [];
+    for (const ch of fixed) {
+      if (ch === "{") stack.push("}");
+      else if (ch === "[") stack.push("]");
+      else if ((ch === "}" || ch === "]") && stack.length) stack.pop();
+    }
+    fixed += stack.reverse().join("");
+    try { return JSON.parse(fixed) as RoastData; } catch { return null; }
+  };
+
   const handleSubmit = useCallback(async () => {
     if (!dob || !tob || !pob.trim()) {
       setError("All three fields are required. The cosmos need coordinates.");
@@ -168,17 +190,15 @@ export default function Home() {
             if (payload.error) throw new Error(payload.error);
             if (payload.text) fullText += payload.text;
             if (payload.done) {
-              const parsed = JSON.parse(fullText.replace(/```json|```/g, "").trim()) as RoastData;
-              setRoastData(parsed);
-              setScreen("result");
+              const parsed = tryParseRoast(fullText);
+              if (parsed) { setRoastData(parsed); setScreen("result"); }
             }
           } catch { /* partial chunk — keep accumulating */ }
         }
       }
       if (fullText && screen !== "result") {
-        const parsed = JSON.parse(fullText.replace(/```json|```/g, "").trim()) as RoastData;
-        setRoastData(parsed);
-        setScreen("result");
+        const parsed = tryParseRoast(fullText);
+        if (parsed) { setRoastData(parsed); setScreen("result"); }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "The stars are temporarily unavailable. Try again.");
