@@ -596,6 +596,16 @@ I will give you my Vedic birth chart details.
 
 Your job is NOT to give me a reading.
 Your job is to roast my life using my chart as evidence.
+════════════════════════════════════════════════════════
+BIRTH CHART DATA  (your source material — invisible to the reader)
+════════════════════════════════════════════════════════
+{chart_block}
+
+════════════════════════════════════════════════════════
+{dasha_block}
+════════════════════════════════════════════════════════
+
+{yoga_block}
 
 RULES:
 - Zero astrology jargon. No planet names, no house numbers, 
@@ -613,6 +623,7 @@ FORMAT:
 - Each point has an emoji title
 - Short punchy paragraphs
 - Last point ties everything together as the cosmic joke
+
 INTENSITY: {intensity_note}
 ════════════════════════════════════════════════════════
 """
