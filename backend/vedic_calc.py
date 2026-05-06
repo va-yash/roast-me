@@ -98,6 +98,24 @@ SIGN_ELEMENT = [
     "fire", "earth", "air", "water"
 ]
 
+# ─── Sign Lordships (Classical 7-planet system) ───────────────────────────────
+# Maps sign index → ruling planet.
+# Rahu/Ketu hold no traditional own signs in the 7-planet system.
+SIGN_LORDS = {
+    0:  "Mars",     # Aries
+    1:  "Venus",    # Taurus
+    2:  "Mercury",  # Gemini
+    3:  "Moon",     # Cancer
+    4:  "Sun",      # Leo
+    5:  "Mercury",  # Virgo
+    6:  "Venus",    # Libra
+    7:  "Mars",     # Scorpio
+    8:  "Jupiter",  # Sagittarius
+    9:  "Saturn",   # Capricorn
+    10: "Saturn",   # Aquarius
+    11: "Jupiter",  # Pisces
+}
+
 
 # ─── Utility functions ────────────────────────────────────────────────────────
 
@@ -340,6 +358,104 @@ def calculate_chart(
         "d9":           d9,
         "d10":          d10,
     }
+
+
+# ─── Dominant Planet Calculation ─────────────────────────────────────────────
+
+def calculate_dominant_planet(chart: dict) -> str:
+    """
+    Determines the psychologically dominant planet via weighted influence scoring.
+
+    Philosophy: dominant ≠ strongest in classical Shadbala terms.
+    A debilitated+retrograde planet creates MORE psychological imprint than
+    an exalted planet the person takes for granted. Someone with debilitated
+    retrograde Saturn works obsessively for respect because they feel the lack —
+    Saturn runs their life completely.
+
+    Scoring breakdown
+    -----------------
+    Rulership bonuses (which planet governs the chart's core reference points):
+      Ascendant lord          +4  (entire chart lens; body; how you meet the world)
+      Sun sign lord           +3  (drives conscious identity and ego)
+      Moon sign lord          +3  (runs the emotional core and habits)
+      Atmakaraka              +3  (soul planet — highest degree among 7 classical planets)
+
+    Dignity / psychological imprint (applied to each planet's own D1 condition):
+      Debilitation + Retrograde  +4  (max imprint: deficiency + inward obsession)
+      Exaltation                 +3  (expresses freely; naturally dominant)
+      Debilitation only          +2  (compensatory drive to chase this planet's themes)
+      Own sign (Swakshetra)      +2  (comfortable and prominent expression)
+      Retrograde only            +1  (internalized, recurring, unresolved)
+
+    House placement:
+      Angular  (1, 4, 7, 10)   +2  (most active, visible in life)
+      Trine    (5, 9)           +1  (dharmic; shapes purpose)
+      Hidden   (8, 12)          +1  (deep, psychologically pervasive)
+    """
+    d1 = chart["d1"]
+    ct = chart["core_trinity"]
+
+    scores: dict[str, float] = {
+        p: 0.0 for p in
+        ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]
+    }
+
+    # Indices for the three core reference signs
+    asc_sign_idx  = SIGNS.index(ct["ascendant"]["sign"])
+    sun_sign_idx  = SIGNS.index(ct["sun"]["sign"])
+    moon_sign_idx = SIGNS.index(ct["moon"]["sign"])
+
+    # Atmakaraka: classical planet (not Rahu/Ketu) with the highest degree
+    # within its sign — represents the soul's primary karmic lesson.
+    classical = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+    atmakaraka = max(classical, key=lambda p: d1[p]["degrees"])
+
+    for planet, p_data in d1.items():
+        sign_idx = p_data["sign_idx"]
+        house    = p_data["house"]
+        retro    = p_data["retrograde"]
+        debil    = p_data["debilitated"]
+        exalt    = p_data["exalted"]
+
+        # Rulership bonuses
+        if SIGN_LORDS.get(asc_sign_idx) == planet:
+            scores[planet] += 4.0
+        if SIGN_LORDS.get(sun_sign_idx) == planet:
+            scores[planet] += 3.0
+        if SIGN_LORDS.get(moon_sign_idx) == planet:
+            scores[planet] += 3.0
+
+        # Atmakaraka bonus
+        if planet == atmakaraka:
+            scores[planet] += 3.0
+
+        # Dignity / psychological imprint
+        # Debil+retro together score higher than either alone because the
+        # person feels the deficiency acutely AND turns it inward — creating
+        # a persistent, defining obsession with this planet's themes.
+        if debil and retro:
+            scores[planet] += 4.0
+        elif debil:
+            scores[planet] += 2.0
+        elif retro:
+            scores[planet] += 1.0
+
+        if exalt:
+            scores[planet] += 3.0
+
+        # Own sign: planet rules the sign it currently occupies
+        if SIGN_LORDS.get(sign_idx) == planet:
+            scores[planet] += 2.0
+
+        # House placement
+        if house in (1, 4, 7, 10):
+            scores[planet] += 2.0
+        elif house in (5, 9):
+            scores[planet] += 1.0
+        elif house in (8, 12):
+            scores[planet] += 1.0
+
+    return max(scores, key=lambda p: scores[p])
 
 
 # ─── Formatter: convert dict → readable text block for Claude ─────────────────
