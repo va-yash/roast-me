@@ -28,7 +28,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from vedic_calc import calculate_chart
+from vedic_calc import calculate_chart, calculate_dominant_planet
 from prompt_builder import build_system_prompt, build_roast_system_prompt
 
 load_dotenv()
@@ -209,6 +209,11 @@ async def create_chart(birth: BirthInput):
         raise HTTPException(500, f"Chart calculation failed: {e}")
 
     try:
+        dominant_planet = calculate_dominant_planet(chart)
+    except Exception as e:
+        dominant_planet = "Saturn"  # safe fallback
+
+    try:
         system_prompt = build_system_prompt(
             chart,
             birth_dt=birth_utc,
@@ -219,9 +224,10 @@ async def create_chart(birth: BirthInput):
 
     session_id = str(uuid.uuid4())
     SESSIONS[session_id] = {
-        "system_prompt": system_prompt,   # Jyotishi advisor mode
-        "chart":         chart,            # raw dict — used by roast endpoint
-        "birth_utc":     birth_utc,        # for dasha timing in roast
+        "system_prompt":   system_prompt,
+        "chart":           chart,
+        "birth_utc":       birth_utc,
+        "dominant_planet": dominant_planet,
         "birth_data": {
             "name":     birth.name,
             "dob":      birth.dob,
@@ -247,6 +253,7 @@ async def create_chart(birth: BirthInput):
         "moon_pada":       ct["moon"]["pada"],
         "location":        geo["formatted_address"],
         "timezone":        geo["timezone"],
+        "dominant_planet": dominant_planet,
     }
 
 
