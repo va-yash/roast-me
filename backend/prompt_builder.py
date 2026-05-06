@@ -619,7 +619,7 @@ BIRTH CHART DATA  (your source material — invisible to the reader)
 OUTPUT FORMAT — FOLLOW EXACTLY
 ════════════════════════════════════════════════════════
 Output ONLY valid JSON — no markdown fences, no explanation, nothing outside the JSON:
-{{"cosmic_title":"...","patterns":[{{"emoji":"🔥","title":"Short punchy title","lines":["line","line","line"]}}]}}
+{{"cosmic_title":"...","patterns":[{{"emoji":"🔥","title":"Short punchy title","body":"Beats 1, 2 and 3 woven into one flowing paragraph under 55 words. Vivid, specific, funny, warm.","closer":"Beat 4 flat closer. One sentence. No exclamation marks."}}]}}
 
 ━━━ Rules for cosmic_title ━━━
 — 4-8 words. An absurd, affectionate archetype. Not astrological.
@@ -633,8 +633,10 @@ Output ONLY valid JSON — no markdown fences, no explanation, nothing outside t
 
 ━━━ Rules for each pattern ━━━
 — Title: 3-7 words. A character trait disguised as a flaw. Should feel like an award they didn't know they won.
-— 4-8 SHORT lines. One sentence per line, two max. Never more than two.
-— Four-beat structure per entry (non-negotiable); Beat 1, Beat 2 and Beat 3, ALL IN ONE PARAGRAPH UNDER 50 WORDS and Beat 4 in a new line, in italics with apprpriate emoji:
+— Two fields: "body" and "closer". No other content fields.
+
+— "body": Beats 1, 2, and 3 woven into ONE continuous paragraph. HARD LIMIT: under 50 words.
+     No line breaks within body. No bullet points. Just one flowing paragraph that moves through:
 
      Beat 1 — THE ABSURD SCENARIO
        Build a hyper-specific, vivid, visualisable metaphor or scene.
@@ -650,8 +652,7 @@ Output ONLY valid JSON — no markdown fences, no explanation, nothing outside t
        The thing they think is their flaw is actually the most interesting thing about them.
        The absurdity IS the compliment. Do not moralize. Just observe.
 
-     Beat 4 — THE FLAT CLOSER (ALWAYS ITALICS AND DIFFERENT LINE)
-       One sentence. No exclamation marks. Not harsh. Not soft. Just accurate.
+— "closer": Beat 4 only. One sentence maximum. No exclamation marks. Not harsh. Not soft. Just accurate.
        The flatness IS the funny. The stillness IS the warmth.
        Examples of perfect closers:
          "You are thriving."
