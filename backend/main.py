@@ -68,7 +68,7 @@ class BirthInput(BaseModel):
 
 class RoastInput(BaseModel):
     session_id: str
-    intensity:  str = "No Mercy"   # "Mild" | "Spicy" | "No Mercy"
+    intensity:  str = "Unhinged"   # "Gentle" | "Chaotic" | "Unhinged"
 
 
 class AskInput(BaseModel):
@@ -272,7 +272,7 @@ async def get_roast(req: RoastInput):
     except Exception as e:
         raise HTTPException(500, f"Roast prompt build failed: {e}")
 
-    messages = [{"role": "user", "content": "Generate the cosmic roast now. Output only JSON."}]
+    messages = [{"role": "user", "content": "Generate the cosmic mirror reading now. Output only JSON."}]
 
     return StreamingResponse(
         _stream_claude(roast_system, messages),
