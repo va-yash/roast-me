@@ -5,7 +5,15 @@ import { gsap } from "gsap";
 
 /* ─── Types ──────────────────────────────────────────────────────────────────── */
 
-interface RoastPattern { emoji: string; title: string; lines: string[]; }
+interface RoastPattern {
+  emoji: string;
+  title: string;
+  /** New structured fields (post-prompt-fix) */
+  body?: string;
+  closer?: string;
+  /** Legacy fallback — old sessions still return lines[] */
+  lines?: string[];
+}
 interface RoastData    { cosmic_title: string; patterns: RoastPattern[]; }
 interface ChartSummary {
   session_id: string; name: string; ascendant: string;
@@ -13,7 +21,7 @@ interface ChartSummary {
   dominant_planet: string;
 }
 
-type Screen    = "input" | "loading" | "result";
+type Screen    = "intro" | "input" | "loading" | "result";
 type Intensity = "Gentle" | "Chaotic" | "Unhinged";
 type Platform  = "instagram" | "snapchat" | "whatsapp" | "facebook" | "twitter" | "copy";
 
@@ -34,25 +42,39 @@ const C = {
 } as const;
 
 const F = {
-  display: "'Space Grotesk', sans-serif",
-  ui:      "'Syne', sans-serif",
-  mono:    "'Inconsolata', monospace",
+  cinematic: "'Cormorant Garamond', serif",
+  display:   "'Space Grotesk', sans-serif",
+  ui:        "'Syne', sans-serif",
+  mono:      "'Inconsolata', monospace",
 } as const;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /* ─── Planet metadata ────────────────────────────────────────────────────────── */
 
-const PLANET_META: Record<string, { symbol: string; color: string; shape: string }> = {
-  Sun:     { symbol: "☉", color: "#E8A020", shape: "sun"     },
-  Moon:    { symbol: "☽", color: "#B8C8E0", shape: "moon"    },
-  Mars:    { symbol: "♂", color: "#C44A4A", shape: "circle"  },
-  Mercury: { symbol: "☿", color: "#6AA0B8", shape: "circle"  },
-  Jupiter: { symbol: "♃", color: "#C4924A", shape: "jupiter" },
-  Venus:   { symbol: "♀", color: "#C07090", shape: "circle"  },
-  Saturn:  { symbol: "♄", color: "#8B9EB7", shape: "saturn"  },
-  Rahu:    { symbol: "☊", color: "#6B5B8A", shape: "circle"  },
-  Ketu:    { symbol: "☋", color: "#8A6B5B", shape: "circle"  },
+const PLANET_META: Record<string, { symbol: string; color: string; }> = {
+  Sun:     { symbol: "☉", color: "#F4C030" },
+  Moon:    { symbol: "☽", color: "#C0D0E8" },
+  Mars:    { symbol: "♂", color: "#D44030" },
+  Mercury: { symbol: "☿", color: "#70A8C0" },
+  Jupiter: { symbol: "♃", color: "#D49040" },
+  Venus:   { symbol: "♀", color: "#E8C060" },
+  Saturn:  { symbol: "♄", color: "#C4B880" },
+  Rahu:    { symbol: "☊", color: "#7055A0" },
+  Ketu:    { symbol: "☋", color: "#A04040" },
+};
+
+/** How each planet's dominant people are described */
+const PLANET_GENTILIC: Record<string, string> = {
+  Sun:     "Solar",
+  Moon:    "Lunar",
+  Mars:    "Martian",
+  Mercury: "Mercurian",
+  Jupiter: "Jovian",
+  Venus:   "Venusian",
+  Saturn:  "Saturnian",
+  Rahu:    "Rahuvian",
+  Ketu:    "Ketuvian",
 };
 
 /* ─── Loading messages ───────────────────────────────────────────────────────── */
@@ -69,10 +91,11 @@ const MSGS = [
   "Preparing your cosmic portrait",
 ];
 
-/* ─── Global CSS ─────────────────────────────────────────────────────────────── */
+/* ─── Global CSS injected once ───────────────────────────────────────────────── */
 
 const CSS = `
 *, *::before, *::after { box-sizing: border-box; }
+
 .rm-input {
   width: 100%;
   background: rgba(255,255,255,0.04);
@@ -101,18 +124,8 @@ input[type=time]::-webkit-calendar-picker-indicator {
 @keyframes rmSpinRev { to { transform: rotate(-360deg); } }
 @keyframes rmFadeUp  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
 @keyframes rmFadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes rmTwinkle { 0%,100%{opacity:0.4} 50%{opacity:1} }
 
-.rm-card { animation: rmFadeUp 0.55s ease forwards; opacity: 0; }
-.rm-card:nth-child(1)  { animation-delay: 0.05s; }
-.rm-card:nth-child(2)  { animation-delay: 0.13s; }
-.rm-card:nth-child(3)  { animation-delay: 0.21s; }
-.rm-card:nth-child(4)  { animation-delay: 0.29s; }
-.rm-card:nth-child(5)  { animation-delay: 0.37s; }
-.rm-card:nth-child(6)  { animation-delay: 0.45s; }
-.rm-card:nth-child(7)  { animation-delay: 0.53s; }
-.rm-card:nth-child(8)  { animation-delay: 0.61s; }
-.rm-card:nth-child(9)  { animation-delay: 0.69s; }
-.rm-card:nth-child(10) { animation-delay: 0.77s; }
 .rm-hero { animation: rmFadeIn 0.9s ease forwards; }
 
 .rm-btn { transition: all 0.15s ease; cursor: pointer; }
@@ -141,68 +154,186 @@ input[type=time]::-webkit-calendar-picker-indicator {
   animation: rmFadeUp 0.25s ease;
 }
 @media (min-width: 480px) { .rm-sheet { border-radius: 16px; } }
+
+/* Star twinkle helpers */
+.rm-star { position:absolute; border-radius:50%; background:rgba(255,255,255,0.75); pointer-events:none; }
+.rm-star-twinkle { animation: rmTwinkle var(--d,3s) ease-in-out infinite; }
 `;
 
-/* ─── Planet silhouette SVG ──────────────────────────────────────────────────── */
+/* ─── Cartoon planet SVG content ─────────────────────────────────────────────── */
 
+function PlanetContent({ planet, color }: { planet: string; color: string }) {
+  switch (planet) {
+
+    case "Sun": {
+      const rays = Array.from({ length: 12 }, (_, i) => i * 30);
+      return (
+        <>
+          <circle cx="250" cy="250" r="175" fill={color} opacity="0.15" />
+          {rays.map(a => {
+            const r = (a * Math.PI) / 180;
+            return (
+              <line key={a}
+                x1={250 + 148 * Math.cos(r)} y1={250 + 148 * Math.sin(r)}
+                x2={250 + 210 * Math.cos(r)} y2={250 + 210 * Math.sin(r)}
+                stroke={color} strokeWidth="14" strokeLinecap="round" opacity="0.85"
+              />
+            );
+          })}
+          <circle cx="250" cy="250" r="142" fill={color} />
+          <circle cx="250" cy="250" r="115" fill="#F8DC78" opacity="0.35" />
+          <circle cx="200" cy="215" r="20" fill="#E8933A" opacity="0.55" />
+          <circle cx="308" cy="285" r="13" fill="#E8933A" opacity="0.45" />
+        </>
+      );
+    }
+
+    case "Moon":
+      return (
+        <>
+          <circle cx="250" cy="250" r="155" fill={color} />
+          <circle cx="328" cy="215" r="132" fill="#060A14" />
+          <circle cx="178" cy="245" r="24" fill="#8A9BB0" opacity="0.75" />
+          <circle cx="178" cy="245" r="18" fill={color} opacity="0.25" />
+          <circle cx="215" cy="325" r="15" fill="#8A9BB0" opacity="0.65" />
+          <circle cx="158" cy="295" r="11" fill="#8A9BB0" opacity="0.6" />
+          <circle cx="195" cy="172" r="17" fill="#8A9BB0" opacity="0.65" />
+          <circle cx="160" cy="330" r="8"  fill="#8A9BB0" opacity="0.5" />
+        </>
+      );
+
+    case "Mars":
+      return (
+        <>
+          <circle cx="250" cy="250" r="155" fill={color} />
+          <ellipse cx="250" cy="215" rx="142" ry="52" fill="#A83010" opacity="0.38" />
+          <ellipse cx="250" cy="95"  rx="58"  ry="24" fill="#EEE8E0" opacity="0.88" />
+          <circle cx="192" cy="265" r="26" fill="#8B2800" opacity="0.55" />
+          <circle cx="192" cy="265" r="21" fill={color}   opacity="0.3"  />
+          <circle cx="318" cy="228" r="18" fill="#8B2800" opacity="0.5"  />
+          <circle cx="272" cy="318" r="13" fill="#8B2800" opacity="0.48" />
+          <circle cx="172" cy="192" r="11" fill="#8B2800" opacity="0.48" />
+          <path d="M 145 275 Q 250 290 355 265"
+            stroke="#7A2400" strokeWidth="6" fill="none" opacity="0.5" strokeLinecap="round" />
+        </>
+      );
+
+    case "Mercury":
+      return (
+        <>
+          <circle cx="250" cy="250" r="140" fill={color} />
+          <circle cx="185" cy="198" r="32" fill="#4A4A4A" opacity="0.68" />
+          <circle cx="185" cy="198" r="27" fill={color}   opacity="0.28" />
+          <circle cx="315" cy="295" r="24" fill="#4A4A4A" opacity="0.62" />
+          <circle cx="315" cy="295" r="19" fill={color}   opacity="0.28" />
+          <circle cx="228" cy="328" r="17" fill="#4A4A4A" opacity="0.58" />
+          <circle cx="295" cy="175" r="15" fill="#4A4A4A" opacity="0.55" />
+          <circle cx="168" cy="318" r="12" fill="#4A4A4A" opacity="0.5"  />
+          <circle cx="335" cy="198" r="10" fill="#4A4A4A" opacity="0.48" />
+          <circle cx="258" cy="252" r="9"  fill="#4A4A4A" opacity="0.45" />
+        </>
+      );
+
+    case "Jupiter":
+      return (
+        <>
+          <circle cx="250" cy="250" r="168" fill={color} />
+          <ellipse cx="250" cy="195" rx="168" ry="30" fill="#8B5A1A" opacity="0.52" />
+          <ellipse cx="250" cy="238" rx="168" ry="19" fill="#A06530" opacity="0.33" />
+          <ellipse cx="250" cy="302" rx="168" ry="24" fill="#8B5A1A" opacity="0.48" />
+          <ellipse cx="250" cy="338" rx="168" ry="15" fill="#A06530" opacity="0.28" />
+          <ellipse cx="318" cy="278" rx="38"  ry="22" fill="#C03030" opacity="0.82" />
+          <ellipse cx="318" cy="278" rx="30"  ry="15" fill="#D04040" opacity="0.45" />
+        </>
+      );
+
+    case "Venus":
+      return (
+        <>
+          <circle cx="250" cy="250" r="158" fill={color} />
+          <path d="M 95 218 Q 200 175 305 218 Q 385 248 355 292"
+            stroke="#C49030" strokeWidth="13" fill="none" opacity="0.5" strokeLinecap="round" />
+          <path d="M 118 282 Q 222 252 325 272 Q 385 284 372 325"
+            stroke="#C49030" strokeWidth="9"  fill="none" opacity="0.4" strokeLinecap="round" />
+          <path d="M 148 178 Q 222 158 302 185"
+            stroke="#B88028" strokeWidth="11" fill="none" opacity="0.42" strokeLinecap="round" />
+          <path d="M 128 335 Q 222 312 335 338"
+            stroke="#C49030" strokeWidth="7"  fill="none" opacity="0.33" strokeLinecap="round" />
+          <circle cx="250" cy="250" r="85" fill="#F8E090" opacity="0.18" />
+        </>
+      );
+
+    case "Saturn":
+      return (
+        <>
+          {/* Rings behind planet */}
+          <ellipse cx="250" cy="265" rx="238" ry="44"
+            fill="none" stroke="#B8984A" strokeWidth="20" opacity="0.68" />
+          <ellipse cx="250" cy="265" rx="208" ry="37"
+            fill="none" stroke="#D4B870" strokeWidth="11" opacity="0.5"  />
+          {/* Planet body */}
+          <circle cx="250" cy="250" r="132" fill={color} />
+          <ellipse cx="250" cy="228" rx="132" ry="24" fill="#B09060" opacity="0.48" />
+          <ellipse cx="250" cy="270" rx="132" ry="15" fill="#B09060" opacity="0.32" />
+          {/* Ring front arc */}
+          <path d="M 14 265 A 236 44 0 0 0 252 309"
+            stroke="#B8984A" strokeWidth="20" fill="none" opacity="0.68" />
+          <path d="M 44 265 A 206 37 0 0 0 252 302"
+            stroke="#D4B870" strokeWidth="11" fill="none" opacity="0.5"  />
+        </>
+      );
+
+    case "Rahu":
+      return (
+        <>
+          <circle cx="250" cy="250" r="150" fill={color} />
+          <circle cx="308" cy="198" r="132" fill="#060A14" opacity="0.48" />
+          <path d="M 250 98  Q 292 155 272 252"
+            stroke="#9070C0" strokeWidth="9" fill="none" opacity="0.58" strokeLinecap="round" />
+          <path d="M 355 162 Q 312 202 292 272"
+            stroke="#8060B0" strokeWidth="6" fill="none" opacity="0.48" strokeLinecap="round" />
+          <circle cx="250" cy="250" r="154"
+            fill="none" stroke="#7050A0" strokeWidth="5" opacity="0.38" />
+        </>
+      );
+
+    case "Ketu":
+      return (
+        <>
+          <circle cx="250" cy="250" r="132" fill={color} />
+          <circle cx="292" cy="208" r="112" fill="#060A14" opacity="0.44" />
+          <path d="M 252 382 Q 305 425 388 488"
+            stroke="#C06060" strokeWidth="12" fill="none" opacity="0.52" strokeLinecap="round" />
+          <path d="M 272 372 Q 328 408 412 460"
+            stroke="#A04040" strokeWidth="7"  fill="none" opacity="0.4"  strokeLinecap="round" />
+          <path d="M 232 392 Q 275 448 348 508"
+            stroke="#C06060" strokeWidth="5"  fill="none" opacity="0.33" strokeLinecap="round" />
+          <circle cx="250" cy="250" r="137"
+            fill="none" stroke="#A04040" strokeWidth="5" opacity="0.38" />
+        </>
+      );
+
+    default:
+      return <circle cx="250" cy="250" r="155" fill={color} />;
+  }
+}
+
+/** Cartoon planet pair — flanks the hero on both sides */
 function PlanetBg({ planet }: { planet: string }) {
   const m = PLANET_META[planet] ?? PLANET_META.Saturn;
-  const s: React.CSSProperties = {
-    position: "absolute", right: -80, top: "50%",
-    transform: "translateY(-50%)", width: 520, height: 520,
-    opacity: 0.065, pointerEvents: "none", zIndex: 0,
-    overflow: "visible",
-  };
-
-  if (m.shape === "saturn") return (
-    <svg style={s} viewBox="0 0 500 500">
-      <circle cx="250" cy="250" r="152" fill={m.color} />
-      <ellipse cx="250" cy="250" rx="295" ry="66"
-        fill="none" stroke={m.color} strokeWidth="22" />
-    </svg>
-  );
-
-  if (m.shape === "sun") {
-    const rays = [0, 45, 90, 135, 180, 225, 270, 315];
-    return (
-      <svg style={s} viewBox="0 0 500 500">
-        <circle cx="250" cy="250" r="142" fill={m.color} />
-        {rays.map(a => {
-          const r = (a * Math.PI) / 180;
-          return (
-            <line key={a}
-              x1={250 + 160 * Math.cos(r)} y1={250 + 160 * Math.sin(r)}
-              x2={250 + 226 * Math.cos(r)} y2={250 + 226 * Math.sin(r)}
-              stroke={m.color} strokeWidth="16" strokeLinecap="round" />
-          );
-        })}
-      </svg>
-    );
-  }
-
-  if (m.shape === "moon") return (
-    <svg style={s} viewBox="0 0 500 500">
-      <path d="M 325 118 A 158 158 0 1 0 325 382 A 122 122 0 1 1 325 118 Z" fill={m.color} />
-    </svg>
-  );
-
-  if (m.shape === "jupiter") return (
-    <svg style={s} viewBox="0 0 500 500">
-      <circle cx="250" cy="250" r="178" fill={m.color} />
-      <ellipse cx="250" cy="202" rx="178" ry="16" fill="rgba(0,0,0,0.35)" />
-      <ellipse cx="250" cy="272" rx="178" ry="11" fill="rgba(0,0,0,0.25)" />
-      <ellipse cx="250" cy="316" rx="178" ry="8"  fill="rgba(0,0,0,0.15)" />
-    </svg>
-  );
-
   return (
-    <svg style={s} viewBox="0 0 500 500">
-      <circle cx="250" cy="250" r="174" fill={m.color} />
-    </svg>
+    <>
+      <svg className="rm-planet-left" viewBox="0 0 500 500" aria-hidden="true">
+        <PlanetContent planet={planet} color={m.color} />
+      </svg>
+      <svg className="rm-planet-right" viewBox="0 0 500 500" aria-hidden="true">
+        <PlanetContent planet={planet} color={m.color} />
+      </svg>
+    </>
   );
 }
 
-/* ─── Canvas story generator ─────────────────────────────────────────────────── */
+/* ─── Story card generator (share image) ─────────────────────────────────────── */
 
 function wrapText(
   ctx: CanvasRenderingContext2D,
@@ -230,14 +361,14 @@ async function genStoryBlob(
   cosmicTitle: string,
   planet: string,
   roastTitle: string,
-  roastLine: string,
+  body: string,
 ): Promise<Blob> {
   await document.fonts.ready;
   const cv = document.createElement("canvas");
   cv.width = 1080; cv.height = 1920;
   const x = cv.getContext("2d")!;
 
-  // Background gradient
+  // Background
   const bg = x.createLinearGradient(0, 0, 0, 1920);
   bg.addColorStop(0,   "#060A14");
   bg.addColorStop(0.5, "#0C1422");
@@ -245,24 +376,34 @@ async function genStoryBlob(
   x.fillStyle = bg;
   x.fillRect(0, 0, 1080, 1920);
 
-  // Deterministic stars (no Math.random → same image every call)
-  x.fillStyle = "rgba(255,255,255,0.55)";
-  for (let i = 0; i < 180; i++) {
+  // Deterministic stars
+  x.fillStyle = "rgba(255,255,255,0.6)";
+  for (let i = 0; i < 200; i++) {
     const sx = (i * 197 + 37) % 1080;
     const sy = (i * 313 + 89) % 1920;
-    const sr = i % 5 === 0 ? 1.8 : i % 3 === 0 ? 1.2 : 0.7;
+    const sr = i % 5 === 0 ? 2 : i % 3 === 0 ? 1.3 : 0.8;
     x.beginPath(); x.arc(sx, sy, sr, 0, Math.PI * 2); x.fill();
   }
 
-  // Planet glow
   const pm = PLANET_META[planet] ?? PLANET_META.Saturn;
-  x.globalAlpha = 0.09;
+
+  // Left planet — vivid, colorful cartoon disc
+  x.globalAlpha = 0.52;
   x.fillStyle = pm.color;
-  x.beginPath(); x.arc(840, 960, 400, 0, Math.PI * 2); x.fill();
+  x.beginPath(); x.arc(-60, 960, 400, 0, Math.PI * 2); x.fill();
+  // Surface detail band
+  x.globalAlpha = 0.28;
+  x.fillStyle = pm.color;
+  x.beginPath(); x.ellipse(-60, 880, 360, 80, 0, 0, Math.PI * 2); x.fill();
+
+  // Right planet — slightly smaller
+  x.globalAlpha = 0.42;
+  x.fillStyle = pm.color;
+  x.beginPath(); x.arc(1140, 960, 340, 0, Math.PI * 2); x.fill();
   if (planet === "Saturn") {
-    x.globalAlpha = 0.06;
-    x.strokeStyle = pm.color; x.lineWidth = 26;
-    x.beginPath(); x.ellipse(840, 960, 590, 138, -0.25, 0, Math.PI * 2); x.stroke();
+    x.globalAlpha = 0.32;
+    x.strokeStyle = pm.color; x.lineWidth = 30;
+    x.beginPath(); x.ellipse(1140, 960, 580, 130, -0.22, 0, Math.PI * 2); x.stroke();
   }
   x.globalAlpha = 1;
 
@@ -270,13 +411,13 @@ async function genStoryBlob(
   x.strokeStyle = "#C08B2F"; x.lineWidth = 2;
   x.beginPath(); x.moveTo(100, 178); x.lineTo(980, 178); x.stroke();
 
-  // Brand label
+  // Brand
   x.fillStyle = "#C08B2F";
   x.font = "700 30px 'Syne', sans-serif";
   x.textAlign = "center";
   x.fillText("ROAST-ME.ME", 540, 140);
 
-  // "Guess who…"
+  // Name line
   const dn = name.trim() ? name.trim().toUpperCase() : "SOMEONE YOU KNOW";
   x.fillStyle = "#64748B";
   x.font = "500 32px 'Space Grotesk', sans-serif";
@@ -284,34 +425,34 @@ async function genStoryBlob(
 
   // Cosmic title
   x.fillStyle = "#E2E8F4";
-  x.font = "700 62px 'Space Grotesk', sans-serif";
-  const ty = wrapText(x, `"${cosmicTitle}"`, 540, 362, 860, 76);
+  x.font = "700 60px 'Space Grotesk', sans-serif";
+  const ty = wrapText(x, `"${cosmicTitle}"`, 540, 362, 860, 74);
 
-  // Planet badge
+  // Planet gentilic badge
+  const gentilic = PLANET_GENTILIC[planet] ?? planet;
   x.fillStyle = pm.color;
   x.font = "600 36px 'Syne', sans-serif";
-  x.fillText(`${pm.symbol}  ${planet.toUpperCase()} DOMINANT`, 540, ty + 76);
+  x.fillText(`${pm.symbol}  You are a ${gentilic} person`, 540, ty + 74);
 
   // Divider
   x.strokeStyle = "rgba(192,139,47,0.3)"; x.lineWidth = 1;
-  x.beginPath(); x.moveTo(200, ty + 116); x.lineTo(880, ty + 116); x.stroke();
+  x.beginPath(); x.moveTo(200, ty + 114); x.lineTo(880, ty + 114); x.stroke();
 
   // Roast title
-  const ry = Math.max(ty + 210, 1270);
+  const ry = Math.max(ty + 205, 1240);
   x.fillStyle = "#E2E8F4";
   x.font = "600 48px 'Space Grotesk', sans-serif";
   const ry2 = wrapText(x, roastTitle, 540, ry, 860, 60);
 
-  // Roast line
+  // Body text
   x.fillStyle = "#64748B";
-  x.font = "400 33px 'Inconsolata', monospace";
-  wrapText(x, roastLine, 540, ry2 + 62, 860, 44);
+  x.font = "400 32px 'Inconsolata', monospace";
+  wrapText(x, body, 540, ry2 + 60, 860, 44);
 
-  // Bottom rule
+  // Bottom rule + CTA
   x.strokeStyle = "#C08B2F"; x.lineWidth = 2;
   x.beginPath(); x.moveTo(100, 1748); x.lineTo(980, 1748); x.stroke();
 
-  // CTA
   x.fillStyle = "#64748B";
   x.font = "500 32px 'Space Grotesk', sans-serif";
   x.fillText("Find your cosmic truth", 540, 1810);
@@ -331,9 +472,11 @@ function buildShareText(
   cosmicTitle: string,
   planet: string,
   roastTitle: string,
-  lines: string[],
+  body: string,
+  closer: string,
 ): string {
   const pm = PLANET_META[planet];
+  const gentilic = PLANET_GENTILIC[planet] ?? planet;
   const who = name.trim()
     ? `Guess who ${name.trim()} actually is?`
     : "Guess who this person actually is?";
@@ -341,10 +484,12 @@ function buildShareText(
     `👁 ${who}`,
     "",
     `"${cosmicTitle}"`,
-    `${pm?.symbol ?? "★"} ${planet} Dominant`,
+    `${pm?.symbol ?? "★"} You are a ${gentilic} person`,
     "",
     `— ${roastTitle} —`,
-    lines[0] ?? "",
+    body,
+    "",
+    closer,
     "",
     "Find your cosmic truth ↓",
     "roast-me.me",
@@ -366,6 +511,19 @@ function parseRoast(raw: string): RoastData | null {
   }
   fixed += stack.reverse().join("");
   try { return JSON.parse(fixed); } catch { return null; }
+}
+
+/* ─── Helper: get body/closer from a pattern (handles old lines[] too) ────────── */
+
+function patternText(p: RoastPattern): { body: string; closer: string } {
+  if (p.body !== undefined) {
+    return { body: p.body ?? "", closer: p.closer ?? "" };
+  }
+  // Legacy fallback: lines[] — last item is the closer
+  const lines = p.lines ?? [];
+  const closer = lines[lines.length - 1] ?? "";
+  const body   = lines.slice(0, -1).join(" ");
+  return { body, closer };
 }
 
 /* ─── Sub-components ─────────────────────────────────────────────────────────── */
@@ -395,10 +553,19 @@ function Ghost({ children, onClick }: { children: React.ReactNode; onClick: () =
   );
 }
 
+/* ─── Star field (deterministic) ────────────────────────────────────────────── */
+
+const STARS = Array.from({ length: 90 }, (_, i) => ({
+  x:    (i * 197 + 37) % 100,
+  y:    (i * 313 + 89) % 100,
+  size: i % 5 === 0 ? 2.2 : i % 3 === 0 ? 1.5 : 0.9,
+  dur:  2 + (i % 4),
+}));
+
 /* ─── Main component ─────────────────────────────────────────────────────────── */
 
 export default function Home() {
-  const [screen,     setScreen]     = useState<Screen>("input");
+  const [screen,     setScreen]     = useState<Screen>("intro");
   const [name,       setName]       = useState("");
   const [dob,        setDob]        = useState("");
   const [tob,        setTob]        = useState("");
@@ -410,19 +577,18 @@ export default function Home() {
   const [chart,      setChart]      = useState<ChartSummary | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  // Share modal state
   const [share, setShare] = useState<{
     open: boolean; idx: number | "hero" | null;
   }>({ open: false, idx: null });
 
-  // Name prompt state (shown when user wants story share but hasn't entered name)
   const [namePrompt, setNamePrompt] = useState<{
     open: boolean; platform: Platform | null; idx: number | "hero" | null;
   }>({ open: false, platform: null, idx: null });
 
   const [tempName, setTempName] = useState("");
 
-  const msgRef = useRef<HTMLDivElement>(null);
+  const introRef = useRef<HTMLDivElement>(null);
+  const msgRef   = useRef<HTMLDivElement>(null);
 
   // ── Inject global styles once
   useEffect(() => {
@@ -434,7 +600,48 @@ export default function Home() {
     }
   }, []);
 
-  // ── GSAP stagger animation for loading messages
+  // ── Cinematic intro: letter-by-letter GSAP animation
+  useEffect(() => {
+    if (screen !== "intro" || !introRef.current) return;
+
+    const container = introRef.current;
+    const line1 = container.querySelector<HTMLElement>(".intro-line-1");
+    const line2 = container.querySelector<HTMLElement>(".intro-line-2");
+    if (!line1 || !line2) return;
+
+    function makeCharSpans(el: HTMLElement): HTMLElement[] {
+      const text = el.textContent ?? "";
+      el.innerHTML = "";
+      return Array.from(text).map(ch => {
+        const span = document.createElement("span");
+        span.textContent = ch === " " ? "\u00A0" : ch;
+        span.style.cssText = "display:inline-block;opacity:0;will-change:transform,opacity,filter;";
+        el.appendChild(span);
+        return span;
+      });
+    }
+
+    const chars1 = makeCharSpans(line1);
+    const chars2 = makeCharSpans(line2);
+
+    const tl = gsap.timeline();
+
+    tl.fromTo(chars1,
+      { opacity: 0, y: 22, filter: "blur(5px)" },
+      { opacity: 1, y: 0,  filter: "blur(0px)", stagger: 0.038, duration: 0.58, ease: "power3.out" }
+    );
+    tl.fromTo(chars2,
+      { opacity: 0, y: 22, filter: "blur(5px)" },
+      { opacity: 1, y: 0,  filter: "blur(0px)", stagger: 0.052, duration: 0.62, ease: "power3.out" },
+      "-=0.15"
+    );
+    tl.to(container, { opacity: 0, duration: 1.1, ease: "power2.in" }, "+=1.8");
+    tl.call(() => setScreen("input"));
+
+    return () => { tl.kill(); };
+  }, [screen]);
+
+  // ── GSAP stagger for loading messages
   useEffect(() => {
     if (screen !== "loading" || !msgRef.current) return;
 
@@ -445,7 +652,6 @@ export default function Home() {
     gsap.set(el, { opacity: 1 });
     el.innerHTML = "";
 
-    // Build a span per word — GSAP animates each independently
     MSGS[msgIdx].split(" ").forEach(word => {
       const span = document.createElement("span");
       span.textContent = word;
@@ -460,7 +666,6 @@ export default function Home() {
       },
     });
 
-    // Reveal words with stagger, then hold 2s, then fade out container
     tl.fromTo(
       spans,
       { opacity: 0, y: 16, skewY: 3 },
@@ -471,12 +676,13 @@ export default function Home() {
     return () => { cancelled = true; tl.kill(); };
   }, [msgIdx, screen]);
 
-  // ── Content getter for a given share index
+  // ── Content getter for share
   const getContent = useCallback((idx: number | "hero" | null) => {
-    if (!roastData || idx === null) return { title: "", lines: [] as string[] };
-    if (idx === "hero") return { title: roastData.cosmic_title, lines: [] };
+    if (!roastData || idx === null) return { title: "", body: "", closer: "" };
+    if (idx === "hero") return { title: roastData.cosmic_title, body: "", closer: "" };
     const p = roastData.patterns[idx as number];
-    return { title: p?.title ?? "", lines: p?.lines ?? [] };
+    const { body, closer } = patternText(p);
+    return { title: p?.title ?? "", body, closer };
   }, [roastData]);
 
   // ── Core share executor
@@ -487,22 +693,21 @@ export default function Home() {
   ) => {
     if (!roastData || !chart) return;
 
-    const { title, lines } = getContent(idx);
-    const cosmicTitle  = roastData.cosmic_title;
-    const roastTitle   = idx === "hero" ? cosmicTitle : title;
-    const planet       = chart.dominant_planet ?? "Saturn";
-    const shareText    = buildShareText(shareName, cosmicTitle, planet, roastTitle, lines);
+    const { title, body, closer } = getContent(idx);
+    const cosmicTitle = roastData.cosmic_title;
+    const roastTitle  = idx === "hero" ? cosmicTitle : title;
+    const planet      = chart.dominant_planet ?? "Saturn";
+    const shareText   = buildShareText(shareName, cosmicTitle, planet, roastTitle, body, closer);
 
     if (platform === "instagram" || platform === "snapchat") {
       setGenerating(true);
       try {
-        const blob = await genStoryBlob(shareName, cosmicTitle, planet, roastTitle, lines[0] ?? "");
+        const blob = await genStoryBlob(shareName, cosmicTitle, planet, roastTitle, body);
         const file = new File([blob], "cosmic-roast.png", { type: "image/png" });
 
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ files: [file], text: shareText });
         } else {
-          // Desktop: download the image
           const url = URL.createObjectURL(blob);
           const a   = document.createElement("a");
           a.href = url; a.download = "cosmic-roast.png"; a.click();
@@ -525,32 +730,20 @@ export default function Home() {
     }
   }, [roastData, chart, getContent]);
 
-  // ── Open share modal
-  const openShare = useCallback((idx: number | "hero") => {
-    setShare({ open: true, idx });
-  }, []);
+  const openShare  = useCallback((idx: number | "hero") => setShare({ open: true, idx }), []);
+  const closeShare = useCallback(() => setShare({ open: false, idx: null }), []);
 
-  // ── Close share modal
-  const closeShare = useCallback(() => {
-    setShare({ open: false, idx: null });
-  }, []);
-
-  // ── Handle platform selection in share modal
   const handlePlatform = useCallback((platform: Platform) => {
     const idx = share.idx;
-
-    // Visual story platforms — ask for name if not already provided
     if ((platform === "instagram" || platform === "snapchat") && !name.trim()) {
       closeShare();
       setNamePrompt({ open: true, platform, idx });
       return;
     }
-
     closeShare();
     doShare(platform, name, idx);
   }, [share, name, closeShare, doShare]);
 
-  // ── Confirm name prompt and execute share
   const submitName = useCallback(async () => {
     const { platform, idx } = namePrompt;
     setNamePrompt({ open: false, platform: null, idx: null });
@@ -559,7 +752,6 @@ export default function Home() {
     setTempName("");
   }, [namePrompt, tempName, name, doShare]);
 
-  // ── Submit birth details
   const handleSubmit = useCallback(async () => {
     if (!dob || !tob || !pob.trim()) {
       setError("Date, time, and city are required. The cosmos need coordinates.");
@@ -610,7 +802,6 @@ export default function Home() {
           } catch { /* partial chunk */ }
         }
       }
-      // Fallback parse at stream end
       if (full) {
         const d = parseRoast(full);
         if (d) { setRoastData(d); setScreen("result"); }
@@ -625,7 +816,82 @@ export default function Home() {
     setScreen("input"); setRoastData(null); setChart(null); setError("");
   }, []);
 
-  /* ─── INPUT SCREEN ──────────────────────────────────────────────────────── */
+  /* ═══════════════════════════════════════════════════════════
+     INTRO SCREEN — cinematic letter-by-letter reveal
+  ═══════════════════════════════════════════════════════════ */
+
+  if (screen === "intro") return (
+    <div
+      onClick={() => { gsap.killTweensOf("*"); setScreen("input"); }}
+      style={{
+        minHeight: "100vh",
+        background: C.bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        overflow: "hidden",
+        cursor: "default",
+      }}
+    >
+      {/* Deterministic star field */}
+      {STARS.map((s, i) => (
+        <div key={i} className="rm-star rm-star-twinkle" style={{
+          left: `${s.x}%`, top: `${s.y}%`,
+          width: s.size, height: s.size,
+          ["--d" as string]: `${s.dur}s`,
+          animationDelay: `${(i * 0.37) % s.dur}s`,
+        }} />
+      ))}
+
+      {/* Radial nebula glow */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(ellipse 70% 70% at 50% 50%, rgba(30,58,140,0.18) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Text */}
+      <div ref={introRef} style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "2rem 1.5rem" }}>
+        <div className="intro-line-1" style={{
+          fontFamily: F.cinematic,
+          fontSize: "clamp(2.4rem, 6.5vw, 5.2rem)",
+          fontWeight: 600,
+          color: C.text,
+          letterSpacing: "0.01em",
+          lineHeight: 1.2,
+          marginBottom: "0.65rem",
+        }}>
+          The cosmos has seen everything.
+        </div>
+        <div className="intro-line-2" style={{
+          fontFamily: F.cinematic,
+          fontSize: "clamp(1.7rem, 4.5vw, 3.6rem)",
+          fontWeight: 500,
+          color: C.gold,
+          letterSpacing: "0.03em",
+          lineHeight: 1.3,
+          fontStyle: "italic",
+        }}>
+          And they have notes.
+        </div>
+      </div>
+
+      {/* Skip hint — fades in late */}
+      <div style={{
+        position: "absolute", bottom: "2.5rem", left: 0, right: 0,
+        textAlign: "center", fontSize: 11, color: C.dim,
+        fontFamily: F.ui, letterSpacing: "0.12em",
+        animation: "rmFadeIn 1s ease 3.5s both",
+      }}>
+        tap anywhere to skip
+      </div>
+    </div>
+  );
+
+  /* ═══════════════════════════════════════════════════════════
+     INPUT SCREEN
+  ═══════════════════════════════════════════════════════════ */
 
   if (screen === "input") return (
     <div style={{
@@ -633,7 +899,6 @@ export default function Home() {
       alignItems: "center", justifyContent: "center",
       padding: "2.5rem 1.25rem", position: "relative",
     }}>
-      {/* Radial glow */}
       <div style={{
         position: "absolute", inset: 0,
         background: "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(30,58,140,0.28) 0%, transparent 65%)",
@@ -641,6 +906,7 @@ export default function Home() {
       }} />
 
       <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 420 }}>
+
         {/* Heading */}
         <div style={{ textAlign: "center", marginBottom: "2.75rem" }}>
           <div style={{
@@ -649,39 +915,50 @@ export default function Home() {
           }}>
             ROAST&#8209;ME.ME
           </div>
+
+          {/* Cinematic title */}
           <h1 style={{
-            fontFamily: F.display, fontSize: "clamp(2rem,7vw,2.75rem)", fontWeight: 700,
-            color: C.text, lineHeight: 1.15, marginBottom: "0.7rem", letterSpacing: "-0.025em",
+            fontFamily: F.cinematic,
+            fontSize: "clamp(2.1rem, 7vw, 3.2rem)",
+            fontWeight: 600,
+            color: C.text,
+            lineHeight: 1.15,
+            marginBottom: "0.55rem",
+            letterSpacing: "0.01em",
           }}>
-            The cosmos have<br />seen everything.
+            Welcome to Roast&#8209;me
           </h1>
-          <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.65, fontFamily: F.ui }}>
-            And they have notes.
+
+          {/* Tagline */}
+          <p style={{
+            fontFamily: F.cinematic,
+            fontSize: "clamp(1rem, 3vw, 1.35rem)",
+            color: C.gold,
+            fontStyle: "italic",
+            lineHeight: 1.5,
+            letterSpacing: "0.01em",
+          }}>
+            where the Cosmos roasts you. Personally&nbsp;;)
           </p>
         </div>
 
         {/* Form */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
-          {/* Optional name */}
           <div>
             <Label>Your name (optional)</Label>
             <input
-              type="text"
-              className="rm-input"
+              type="text" className="rm-input"
               placeholder="Used for sharing — keeps it personal"
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={name} onChange={e => setName(e.target.value)}
             />
           </div>
 
-          {/* Date */}
           <div>
             <Label>Date of birth</Label>
             <input type="date" className="rm-input" value={dob} onChange={e => setDob(e.target.value)} />
           </div>
 
-          {/* Time + City */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             <div style={{ flex: "1 1 130px" }}>
               <Label>Time of birth</Label>
@@ -696,7 +973,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Intensity */}
           <div>
             <Label>Roast intensity</Label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
@@ -741,7 +1017,9 @@ export default function Home() {
     </div>
   );
 
-  /* ─── LOADING SCREEN ─────────────────────────────────────────────────────── */
+  /* ═══════════════════════════════════════════════════════════
+     LOADING SCREEN
+  ═══════════════════════════════════════════════════════════ */
 
   if (screen === "loading") return (
     <div style={{
@@ -760,10 +1038,7 @@ export default function Home() {
         padding: "2rem", maxWidth: 440, width: "100%",
       }}>
         {/* Spinning rings */}
-        <div style={{
-          position: "relative", width: 68, height: 68,
-          margin: "0 auto 2.5rem",
-        }}>
+        <div style={{ position: "relative", width: 68, height: 68, margin: "0 auto 2.5rem" }}>
           <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `1px solid ${C.dim}` }} />
           <div style={{
             position: "absolute", inset: 0, borderRadius: "50%",
@@ -781,24 +1056,21 @@ export default function Home() {
           }} />
         </div>
 
-        {/* GSAP word-stagger container — content managed imperatively */}
-        <div
-          ref={msgRef}
-          style={{
-            fontFamily: F.display,
-            fontSize: "clamp(1.1rem, 4vw, 1.35rem)",
-            fontWeight: 600,
-            color: C.text,
-            letterSpacing: "-0.01em",
-            lineHeight: 1.4,
-            minHeight: 48,
-            marginBottom: "1rem",
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: "0 5px",
-          }}
-        />
+        <div ref={msgRef} style={{
+          fontFamily: F.cinematic,
+          fontSize: "clamp(1.2rem, 4vw, 1.6rem)",
+          fontWeight: 500,
+          color: C.text,
+          letterSpacing: "0.005em",
+          lineHeight: 1.4,
+          minHeight: 52,
+          marginBottom: "1rem",
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: "0 5px",
+          fontStyle: "italic",
+        }} />
 
         <div style={{ fontSize: 12, color: C.dim, fontFamily: F.ui, letterSpacing: "0.05em" }}>
           About 15 seconds. The planets are deliberating.
@@ -807,36 +1079,34 @@ export default function Home() {
     </div>
   );
 
-  /* ─── RESULT SCREEN ──────────────────────────────────────────────────────── */
+  /* ═══════════════════════════════════════════════════════════
+     RESULT SCREEN
+  ═══════════════════════════════════════════════════════════ */
 
   const patterns    = roastData?.patterns ?? [];
   const cosmicTitle = roastData?.cosmic_title ?? "Certified Chaos Architect";
   const planet      = chart?.dominant_planet ?? "Saturn";
   const pm          = PLANET_META[planet];
+  const gentilic    = PLANET_GENTILIC[planet] ?? planet;
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, position: "relative" }}>
-      {/* Fixed radial glow */}
       <div style={{
         position: "fixed", inset: 0,
         background: "radial-gradient(ellipse 80% 40% at 50% -5%, rgba(30,58,140,0.1) 0%, transparent 60%)",
         pointerEvents: "none", zIndex: 0,
       }} />
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 560, margin: "0 auto", paddingBottom: "4rem" }}>
+      <div className="rm-result-content">
 
-        {/* ── Hero ──────────────────────────────────────────────────────── */}
-        <div className="rm-hero" style={{
-          background: "linear-gradient(165deg, #0C1422 0%, #060A14 100%)",
-          borderBottom: `1px solid ${C.goldBorder}`,
-          padding: "clamp(2rem,6vw,3rem) 1.5rem 2rem",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
-        }}>
+        {/* ── Hero — full width, planet flanked ────────────────────────── */}
+        <div className="rm-hero-section rm-hero">
+
+          {/* Cartoon planets on both sides */}
           <PlanetBg planet={planet} />
 
           <div style={{ position: "relative", zIndex: 1 }}>
+
             <div style={{
               fontSize: 9, letterSpacing: "0.28em", color: C.gold, textTransform: "uppercase",
               fontWeight: 700, marginBottom: "1rem", fontFamily: F.ui,
@@ -844,28 +1114,33 @@ export default function Home() {
               ROAST&#8209;ME.ME · YOUR COSMIC VERDICT
             </div>
 
+            {/* Cosmic title — cinematic serif */}
             <h2 style={{
-              fontFamily: F.display,
-              fontSize: "clamp(1.5rem, 5vw, 2.1rem)",
-              fontWeight: 700, color: C.text, lineHeight: 1.2,
-              marginBottom: "1rem", letterSpacing: "-0.025em",
+              fontFamily: F.cinematic,
+              fontSize: "clamp(2rem, 5.5vw, 3.5rem)",
+              fontWeight: 600,
+              color: C.text,
+              lineHeight: 1.15,
+              marginBottom: "1rem",
+              letterSpacing: "0.005em",
+              fontStyle: "italic",
             }}>
               &ldquo;{cosmicTitle}&rdquo;
             </h2>
 
-            {/* Dominant planet badge */}
+            {/* Planet gentilic badge */}
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "6px 16px", borderRadius: 20,
+              padding: "7px 18px", borderRadius: 20,
               border: `1px solid ${C.goldBorder}`, background: C.goldFaint,
               marginBottom: "1.25rem",
             }}>
-              <span style={{ color: pm?.color ?? C.gold, fontSize: 17 }}>{pm?.symbol}</span>
+              <span style={{ color: pm?.color ?? C.gold, fontSize: 18 }}>{pm?.symbol}</span>
               <span style={{
-                fontSize: 11, fontFamily: F.ui, fontWeight: 700,
-                letterSpacing: "0.13em", color: C.goldLight, textTransform: "uppercase",
+                fontSize: 12, fontFamily: F.ui, fontWeight: 700,
+                letterSpacing: "0.1em", color: C.goldLight, textTransform: "uppercase",
               }}>
-                {planet} Dominant
+                You are a {gentilic} person
               </span>
             </div>
 
@@ -891,22 +1166,21 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Pattern cards ─────────────────────────────────────────────── */}
-        <div style={{
-          padding: "1.25rem 0.9rem 0",
-          display: "flex", flexDirection: "column", gap: 10,
-        }}>
+        {/* ── Pattern cards — 2-col grid on desktop ────────────────────── */}
+        <div className="rm-grid-wrap">
           {patterns.map((p, i) => {
             const last = i === patterns.length - 1;
+            const { body, closer } = patternText(p);
+
             return (
               <div key={i} className="rm-card" style={{
                 background: last ? C.cardDeep : C.card,
                 border: `1px solid ${last ? C.goldBorder : C.border}`,
-                borderRadius: 10,
-                padding: "1.2rem 1.2rem 0.9rem",
+                borderRadius: 12,
+                padding: "1.3rem 1.25rem 1rem",
                 position: "relative", overflow: "hidden",
               }}>
-                {/* Gold accent bar on final card */}
+                {/* Gold accent top bar on final card */}
                 {last && (
                   <div style={{
                     position: "absolute", top: 0, left: 0, right: 0, height: 2,
@@ -921,7 +1195,7 @@ export default function Home() {
                   </span>
                   <h3 style={{
                     fontFamily: F.display,
-                    fontSize: "clamp(1rem, 3.5vw, 1.2rem)",
+                    fontSize: "clamp(0.95rem, 3vw, 1.15rem)",
                     fontWeight: last ? 700 : 600,
                     color: last ? C.goldLight : C.text,
                     lineHeight: 1.25, letterSpacing: "-0.015em",
@@ -930,21 +1204,39 @@ export default function Home() {
                   </h3>
                 </div>
 
-                {/* Lines */}
-                <div style={{ paddingLeft: 31, marginBottom: 11 }}>
-                  {p.lines.map((line, j) => {
-                    const closer = j === p.lines.length - 1;
-                    return (
-                      <p key={j} style={{
-                        fontFamily: F.mono, fontSize: 13.5, lineHeight: 1.85,
-                        color: closer ? C.muted : "#C5BEDD",
-                        fontWeight: closer ? 300 : 400,
-                      }}>
-                        {line}
-                      </p>
-                    );
-                  })}
+                {/* Body — beats 1-3 */}
+                <div style={{ paddingLeft: 31, marginBottom: 10 }}>
+                  <p style={{
+                    fontFamily: F.mono,
+                    fontSize: 13.5,
+                    lineHeight: 1.82,
+                    color: "#C5BEDD",
+                    fontWeight: 400,
+                  }}>
+                    {body}
+                  </p>
                 </div>
+
+                {/* Closer — beat 4, italic separator */}
+                {closer && (
+                  <div style={{
+                    paddingLeft: 31,
+                    marginBottom: 11,
+                    borderTop: `1px solid ${last ? C.goldBorder : C.border}`,
+                    paddingTop: 9,
+                  }}>
+                    <p style={{
+                      fontFamily: F.cinematic,
+                      fontSize: 15,
+                      lineHeight: 1.65,
+                      color: C.muted,
+                      fontStyle: "italic",
+                      letterSpacing: "0.01em",
+                    }}>
+                      {closer}
+                    </p>
+                  </div>
+                )}
 
                 {/* Share button */}
                 <div style={{ paddingLeft: 31, display: "flex", justifyContent: "flex-end" }}>
@@ -963,10 +1255,14 @@ export default function Home() {
         </div>
 
         {/* ── Footer CTA ────────────────────────────────────────────────── */}
-        <div style={{ padding: "2rem 1rem 0", textAlign: "center" }}>
+        <div style={{ padding: "2.5rem 1rem 0", textAlign: "center" }}>
           <p style={{
-            fontSize: 13, color: C.muted, marginBottom: "1.1rem",
-            lineHeight: 1.65, fontFamily: F.ui,
+            fontFamily: F.cinematic,
+            fontSize: "1.1rem",
+            fontStyle: "italic",
+            color: C.muted,
+            marginBottom: "1.1rem",
+            lineHeight: 1.65,
           }}>
             Know someone who needs to see themselves clearly?
           </p>
@@ -988,7 +1284,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Share modal ────────────────────────────────────────────────── */}
+      {/* ── Share modal ─────────────────────────────────────────────────── */}
       {share.open && (
         <div className="rm-overlay" onClick={closeShare}>
           <div className="rm-sheet" onClick={e => e.stopPropagation()}>
@@ -1008,7 +1304,6 @@ export default function Home() {
               }}>✕</button>
             </div>
 
-            {/* Preview snippet */}
             <p style={{
               fontSize: 12, color: C.muted, marginBottom: "1.25rem",
               fontFamily: F.mono, lineHeight: 1.5,
@@ -1029,9 +1324,7 @@ export default function Home() {
                 { id: "copy"     as Platform, icon: "📋", label: "Copy Text",         note: ""           },
               ]).map(({ id, icon, label, note }) => (
                 <button
-                  key={id}
-                  className="rm-btn"
-                  disabled={generating}
+                  key={id} className="rm-btn" disabled={generating}
                   onClick={() => handlePlatform(id)}
                   style={{
                     display: "flex", alignItems: "center", gap: 12,
@@ -1051,8 +1344,7 @@ export default function Home() {
                       color: generating && (id === "instagram" || id === "snapchat") ? C.gold : C.muted,
                       letterSpacing: "0.06em",
                     }}>
-                      {generating && (id === "instagram" || id === "snapchat")
-                        ? "Generating…" : note}
+                      {generating && (id === "instagram" || id === "snapchat") ? "Generating…" : note}
                     </span>
                   )}
                 </button>
@@ -1070,8 +1362,9 @@ export default function Home() {
         >
           <div className="rm-sheet" onClick={e => e.stopPropagation()}>
             <h3 style={{
-              fontFamily: F.display, fontWeight: 700, fontSize: 18,
-              color: C.text, marginBottom: 6, letterSpacing: "-0.015em",
+              fontFamily: F.cinematic, fontWeight: 600, fontSize: 22,
+              color: C.text, marginBottom: 6, letterSpacing: "0.005em",
+              fontStyle: "italic",
             }}>
               Add your name to the story?
             </h3>
@@ -1085,39 +1378,29 @@ export default function Home() {
             </p>
 
             <input
-              type="text"
-              className="rm-input"
+              type="text" className="rm-input"
               placeholder="Your name (or leave blank)"
-              value={tempName}
-              onChange={e => setTempName(e.target.value)}
+              value={tempName} onChange={e => setTempName(e.target.value)}
               onKeyDown={e => e.key === "Enter" && submitName()}
               style={{ marginBottom: 12 }}
               autoFocus
             />
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <button
-                className="rm-btn"
-                onClick={() => { setTempName(""); submitName(); }}
-                style={{
-                  padding: "11px 0", borderRadius: 6,
-                  background: "transparent", border: `1px solid ${C.border}`,
-                  color: C.muted, fontFamily: F.ui, fontWeight: 600, fontSize: 13,
-                }}
-              >
+              <button className="rm-btn" onClick={() => { setTempName(""); submitName(); }} style={{
+                padding: "11px 0", borderRadius: 6, background: "transparent",
+                border: `1px solid ${C.border}`, color: C.muted,
+                fontFamily: F.ui, fontWeight: 600, fontSize: 13,
+              }}>
                 Skip
               </button>
-              <button
-                className="rm-btn"
-                onClick={submitName}
-                style={{
-                  padding: "11px 0", borderRadius: 6,
-                  background: `linear-gradient(135deg, ${C.gold} 0%, #9A6B18 100%)`,
-                  border: "none", color: "#07060D",
-                  fontFamily: F.display, fontWeight: 700, fontSize: 13,
-                  letterSpacing: "0.04em",
-                }}
-              >
+              <button className="rm-btn" onClick={submitName} style={{
+                padding: "11px 0", borderRadius: 6,
+                background: `linear-gradient(135deg, ${C.gold} 0%, #9A6B18 100%)`,
+                border: "none", color: "#07060D",
+                fontFamily: F.display, fontWeight: 700, fontSize: 13,
+                letterSpacing: "0.04em",
+              }}>
                 Generate Story →
               </button>
             </div>
