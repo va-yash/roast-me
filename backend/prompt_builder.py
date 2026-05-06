@@ -635,7 +635,7 @@ Output ONLY valid JSON — no markdown fences, no explanation, nothing outside t
 — Title: 3-7 words. A character trait disguised as a flaw. Should feel like an award they didn't know they won.
 — Two fields: "body" and "closer". No other content fields.
 
-— "body": Beats 1, 2, and 3 woven into ONE continuous paragraph. HARD LIMIT: under 50 words.
+— "body": Beats 1 and 2, woven into ONE continuous paragraph. HARD LIMIT: under 35 words.
      No line breaks within body. No bullet points. Just one flowing paragraph that moves through:
 
      Beat 1 — THE ABSURD SCENARIO
@@ -647,12 +647,7 @@ Output ONLY valid JSON — no markdown fences, no explanation, nothing outside t
        Draw the parallel to their actual behaviour without explaining.
        They should be nodding. They have lived this. They know exactly what you mean.
 
-     Beat 3 — THE BEAUTIFUL CONTRADICTION
-       Reveal the twist. Their "problem" is their superpower operating without a manual.
-       The thing they think is their flaw is actually the most interesting thing about them.
-       The absurdity IS the compliment. Do not moralize. Just observe.
-
-— "closer": Beat 4 only. One sentence maximum. No exclamation marks. Not harsh. Not soft. Just accurate.
+— "closer": Beat 3 only. One sentence maximum. No exclamation marks. Not harsh. Not soft. Just accurate.
        The flatness IS the funny. The stillness IS the warmth.
        Examples of perfect closers:
          "You are thriving."
