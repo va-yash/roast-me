@@ -9,8 +9,8 @@ html {
 }
 
 body {
-  background: #09080F;
-  color: #EDE8E0;
+  background: #060A14;
+  color: #E2E8F4;
   font-family: 'Syne', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -23,4 +23,133 @@ input, button, select, textarea {
 
 button {
   cursor: pointer;
+}
+
+/* ── Result page wrapper ───────────────────────────────────────────── */
+
+.rm-result-content {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 4rem;
+}
+
+@media (min-width: 768px) {
+  .rm-result-content {
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+}
+
+/* ── Hero — full-width stretch on desktop ─────────────────────────── */
+
+.rm-hero-section {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  border-bottom: 1px solid rgba(192, 139, 47, 0.28);
+  padding: clamp(2.5rem, 6vw, 4rem) 1.5rem 2.5rem;
+  background: linear-gradient(165deg, #0C1422 0%, #060A14 100%);
+}
+
+/* ── Pattern card grid ────────────────────────────────────────────── */
+
+.rm-grid-wrap {
+  padding: 1.5rem 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .rm-grid-wrap {
+    padding: 1.75rem 1.5rem 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+
+  /* Last card spans full width when odd count */
+  .rm-grid-wrap > .rm-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    max-width: 620px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* ── Card hover glow ──────────────────────────────────────────────── */
+
+.rm-card {
+  animation: rmFadeUp 0.55s ease forwards;
+  opacity: 0;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.rm-card:nth-child(1)  { animation-delay: 0.05s; }
+.rm-card:nth-child(2)  { animation-delay: 0.13s; }
+.rm-card:nth-child(3)  { animation-delay: 0.21s; }
+.rm-card:nth-child(4)  { animation-delay: 0.29s; }
+.rm-card:nth-child(5)  { animation-delay: 0.37s; }
+.rm-card:nth-child(6)  { animation-delay: 0.45s; }
+.rm-card:nth-child(7)  { animation-delay: 0.53s; }
+.rm-card:nth-child(8)  { animation-delay: 0.61s; }
+.rm-card:nth-child(9)  { animation-delay: 0.69s; }
+.rm-card:nth-child(10) { animation-delay: 0.77s; }
+
+.rm-card:hover {
+  border-color: rgba(192, 139, 47, 0.6) !important;
+  box-shadow: 0 0 28px rgba(192, 139, 47, 0.11), 0 4px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+}
+
+/* ── Planet decorative SVGs ───────────────────────────────────────── */
+
+.rm-planet-left {
+  position: absolute;
+  left: -200px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.22;
+  width: 520px;
+  height: 520px;
+}
+
+.rm-planet-right {
+  position: absolute;
+  right: -200px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.18;
+  width: 440px;
+  height: 440px;
+}
+
+@media (min-width: 768px) {
+  .rm-planet-left {
+    opacity: 0.48;
+    left: -160px;
+    width: 580px;
+    height: 580px;
+  }
+
+  .rm-planet-right {
+    opacity: 0.4;
+    right: -160px;
+    width: 500px;
+    height: 500px;
+  }
+}
+
+/* ── Intro star field ─────────────────────────────────────────────── */
+
+.rm-intro-star {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  pointer-events: none;
 }
