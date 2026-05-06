@@ -7,7 +7,7 @@ Environment variables (.env):
   OPENCAGE_API_KEY    = your_opencage_key
   ALLOWED_ORIGIN      = https://roast-me.me   (or * for dev)
   CLAUDE_MODEL        = claude-sonnet-4-6
-  MAX_TOKENS          = 1200
+  MAX_TOKENS          = 3000
 
 Run locally:
   uvicorn main:app --reload --port 8000
@@ -37,7 +37,7 @@ ANTHROPIC_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 OPENCAGE_KEY   = os.getenv("OPENCAGE_API_KEY", "")
 ALLOWED_ORIGIN = os.getenv("ALLOWED_ORIGIN", "*")
 CLAUDE_MODEL   = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
-MAX_TOKENS     = int(os.getenv("MAX_TOKENS", "1200"))
+MAX_TOKENS     = int(os.getenv("MAX_TOKENS", "3000"))
 
 # ── In-memory session store ───────────────────────────────────────────────────
 # { session_id: { system_prompt, chart, birth_utc, birth_data } }
