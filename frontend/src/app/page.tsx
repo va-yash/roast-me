@@ -564,6 +564,38 @@ function Ghost({ children, onClick }: { children: React.ReactNode; onClick: () =
   );
 }
 
+function NavBar() {
+  const lk: React.CSSProperties = {
+    fontSize: 11, fontFamily: F.ui, fontWeight: 600,
+    color: C.muted, textDecoration: "underline",
+    textUnderlineOffset: 3, letterSpacing: "0.02em",
+    cursor: "pointer",
+  };
+  return (
+    <div style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
+      height: 46,
+      background: "rgba(6,10,20,0.94)",
+      backdropFilter: "blur(14px)",
+      borderBottom: `1px solid rgba(59,100,200,0.15)`,
+      display: "flex", alignItems: "center",
+      padding: "0 1.5rem",
+      gap: 0,
+    }}>
+      <span style={{
+        fontFamily: F.ui, fontSize: 13, fontWeight: 800,
+        color: C.gold, letterSpacing: "0.1em", marginRight: 18,
+      }}>
+        ROAST-ME.ME
+      </span>
+      <span style={{ color: C.dim, marginRight: 14, fontSize: 12 }}>|</span>
+      <a href="/know-the-creator" style={lk}>Know the Creator</a>
+      <span style={{ color: C.dim, margin: "0 10px", fontSize: 12 }}>|</span>
+      <a href="/feedback" style={lk}>Feedback</a>
+    </div>
+  );
+}
+
 /* ─── Star field (deterministic) ────────────────────────────────────────────── */
 
 const STARS = Array.from({ length: 90 }, (_, i) => ({
@@ -804,7 +836,7 @@ export default function Home() {
       const rr = await fetch(`${API_URL}/api/roast`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: cd.session_id, intensity, language }),
+        body: JSON.stringify({ session_id: cd.session_id, intensity }),
       });
       if (!rr.ok || !rr.body) throw new Error("Stream failed to start");
 
@@ -837,7 +869,7 @@ export default function Home() {
       setError(e instanceof Error ? e.message : "Stars unavailable. Try again.");
       setScreen("input");
     }
-  }, [dob, tob, pob, intensity, name]);
+  }, [dob, tob, pob, intensity, name, language]);
 
   const restart = useCallback(() => {
     setScreen("input"); setRoastData(null); setChart(null); setError("");
@@ -920,195 +952,81 @@ export default function Home() {
      INPUT SCREEN
   ═══════════════════════════════════════════════════════════ */
 
-  if (screen === "input") {
-    const panelStyle: React.CSSProperties = {
-      background: C.card,
-      border: `1px solid ${C.border}`,
-      borderRadius: 12,
-      padding: "1.4rem 1.25rem",
-    };
-    const linkStyle: React.CSSProperties = {
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "5px 13px", borderRadius: 5, fontSize: 11,
-      fontFamily: F.ui, fontWeight: 700, letterSpacing: "0.06em",
-      background: C.goldFaint, border: `1px solid ${C.goldBorder}`,
-      color: C.goldLight, textDecoration: "none",
-    };
-    return (
+  if (screen === "input") return (
+    <div style={{ minHeight: "100vh", background: C.bg, position: "relative" }}>
+      <NavBar />
+
       <div style={{
-        minHeight: "100vh", background: C.bg,
-        padding: "2.5rem 1.25rem",
-        position: "relative",
-        display: "flex", alignItems: "flex-start", justifyContent: "center",
+        position: "absolute", inset: 0,
+        background: "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(30,58,140,0.28) 0%, transparent 65%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Centered form — full horizontal, like Claude chat */}
+      <div style={{
+        position: "relative", zIndex: 1,
+        minHeight: "100vh",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "70px 1.5rem 3rem",
       }}>
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(30,58,140,0.28) 0%, transparent 65%)",
-          pointerEvents: "none",
-        }} />
+        <div style={{ width: "100%", maxWidth: 700 }}>
 
-        <div style={{
-          position: "relative", zIndex: 1,
-          width: "100%", maxWidth: 1140,
-          display: "flex", flexWrap: "wrap",
-          gap: "1.75rem",
-          alignItems: "flex-start",
-          justifyContent: "center",
-        }}>
-
-          {/* ── LEFT: Creator + Feedback ──────────────────────────────── */}
-          <div style={{
-            flex: "1 1 460px",
-            display: "flex", flexWrap: "wrap",
-            gap: "1rem", alignItems: "flex-start",
-          }}>
-
-            {/* Know the Creator */}
-            <div style={{ ...panelStyle, flex: "1 1 210px" }}>
-              <div style={{
-                fontSize: 9, letterSpacing: "0.22em", color: C.gold,
-                textTransform: "uppercase", fontWeight: 700,
-                marginBottom: "0.6rem", fontFamily: F.ui,
-              }}>
-                Know the Creator
-              </div>
-              <p style={{ fontSize: 11, color: C.muted, fontFamily: F.ui, lineHeight: 1.6, marginBottom: "0.65rem" }}>
-                Unfortunately the creator is unknown but here the person who created this webpage:
-              </p>
-              <h2 style={{
-                fontFamily: F.display,
-                fontSize: "clamp(1.35rem, 2.8vw, 1.75rem)",
-                fontWeight: 800, color: C.text,
-                letterSpacing: "-0.03em", lineHeight: 1.15,
-                marginBottom: "0.5rem",
-              }}>
-                Yashraj Vasishtha
-              </h2>
-              <p style={{ fontSize: 11.5, color: C.muted, fontFamily: F.ui, lineHeight: 1.75, marginBottom: "1rem" }}>
-                Aviation · Energy · AI. Has a knack for modern physics, vedic texts, anthropology,
-                philosophy, and psychology. Building practical solutions at the edge.
-              </p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <a href="https://www.linkedin.com/in/yashraj-vasishtha/" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                  in&nbsp;LinkedIn
-                </a>
-                <a href="https://www.instagram.com/yashraj__v/" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                  ◎&nbsp;Instagram
-                </a>
-              </div>
+          {/* Heading */}
+          <div style={{ textAlign: "center", marginBottom: "2.25rem" }}>
+            <div style={{
+              fontSize: 10, letterSpacing: "0.3em", color: C.gold,
+              textTransform: "uppercase", fontWeight: 700,
+              marginBottom: "1rem", fontFamily: F.ui,
+            }}>
+              ROAST&#8209;ME.ME
             </div>
-
-            {/* Feedback */}
-            <div style={{ ...panelStyle, flex: "1 1 210px" }}>
-              <div style={{
-                fontSize: 9, letterSpacing: "0.22em", color: C.gold,
-                textTransform: "uppercase", fontWeight: 700,
-                marginBottom: "0.6rem", fontFamily: F.ui,
-              }}>
-                Feedback
-              </div>
-              {feedbackDone ? (
-                <div style={{ textAlign: "center", padding: "1.5rem 0", fontFamily: F.cinematic, fontStyle: "italic", fontSize: 15, color: C.goldLight, lineHeight: 1.7 }}>
-                  Thank you for the stars. ✨<br />
-                  <span style={{ fontSize: 11, color: C.muted }}>Your note has been received.</span>
-                </div>
-              ) : (
-                <>
-                  <p style={{ fontSize: 11, color: C.muted, fontFamily: F.ui, lineHeight: 1.6, marginBottom: "0.75rem" }}>
-                    How was your experience?
-                  </p>
-                  <div style={{ display: "flex", gap: 10, marginBottom: "0.9rem" }}>
-                    {([
-                      { key: "sad",     label: "😢" },
-                      { key: "alright", label: "😐" },
-                      { key: "happy",   label: "😊" },
-                    ] as const).map(({ key, label }) => (
-                      <button key={key} className="rm-btn" onClick={() => setFeedbackEmoji(key)} style={{
-                        flex: 1, fontSize: 26, padding: "8px 0",
-                        background: feedbackEmoji === key ? C.goldFaint : "transparent",
-                        border: `1px solid ${feedbackEmoji === key ? C.gold : C.dim}`,
-                        borderRadius: 8,
-                        transform: feedbackEmoji === key ? "scale(1.12)" : "scale(1)",
-                        transition: "all 0.15s ease",
-                      }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    className="rm-input"
-                    placeholder="Optional: tell us more…"
-                    value={feedbackText}
-                    onChange={e => setFeedbackText(e.target.value)}
-                    rows={3}
-                    style={{ resize: "none", marginBottom: "0.75rem", lineHeight: 1.6 }}
-                  />
-                  <button className="rm-btn" onClick={handleFeedbackSubmit} style={{
-                    width: "100%", height: 40, border: "none", borderRadius: 6,
-                    background: feedbackEmoji ? `linear-gradient(135deg, ${C.gold} 0%, #9A6B18 100%)` : C.dim,
-                    color: feedbackEmoji ? "#07060D" : C.muted,
-                    fontSize: 12, fontFamily: F.display, fontWeight: 700,
-                    letterSpacing: "0.05em",
-                    cursor: feedbackEmoji ? "pointer" : "default",
-                  }}>
-                    Send Feedback →
-                  </button>
-                </>
-              )}
-            </div>
+            <h1 style={{
+              fontFamily: F.cinematic,
+              fontSize: "clamp(2.1rem, 6vw, 3.4rem)",
+              fontWeight: 600, color: C.text,
+              lineHeight: 1.15, marginBottom: "0.55rem",
+              letterSpacing: "0.01em",
+            }}>
+              Welcome to Roast&#8209;me
+            </h1>
+            <p style={{
+              fontFamily: F.cinematic,
+              fontSize: "clamp(1rem, 2.8vw, 1.35rem)",
+              color: C.gold, fontStyle: "italic",
+              lineHeight: 1.5, letterSpacing: "0.01em",
+            }}>
+              where the Cosmos roasts you. Personally&nbsp;;)
+            </p>
           </div>
 
-          {/* ── RIGHT: Form ───────────────────────────────────────────── */}
-          <div style={{ flex: "0 1 420px", minWidth: 280 }}>
-
-            {/* Heading */}
-            <div style={{ textAlign: "center", marginBottom: "2.2rem" }}>
-              <div style={{
-                fontSize: 10, letterSpacing: "0.3em", color: C.gold, textTransform: "uppercase",
-                fontWeight: 700, marginBottom: "1.1rem", fontFamily: F.ui,
-              }}>
-                ROAST&#8209;ME.ME
-              </div>
-              <h1 style={{
-                fontFamily: F.cinematic,
-                fontSize: "clamp(2.1rem, 7vw, 3.2rem)",
-                fontWeight: 600, color: C.text,
-                lineHeight: 1.15, marginBottom: "0.55rem",
-                letterSpacing: "0.01em",
-              }}>
-                Welcome to Roast&#8209;me
-              </h1>
-              <p style={{
-                fontFamily: F.cinematic,
-                fontSize: "clamp(1rem, 3vw, 1.35rem)",
-                color: C.gold, fontStyle: "italic",
-                lineHeight: 1.5, letterSpacing: "0.01em",
-              }}>
-                where the Cosmos roasts you. Personally&nbsp;;)
-              </p>
+          {/* Form fields */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <Label>Your name (optional)</Label>
+              <input type="text" className="rm-input"
+                placeholder="Used for sharing — keeps it personal"
+                value={name} onChange={e => setName(e.target.value)} />
             </div>
 
-            {/* Form fields */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <Label>Your name (optional)</Label>
-                <input type="text" className="rm-input" placeholder="Used for sharing — keeps it personal" value={name} onChange={e => setName(e.target.value)} />
+            <div>
+              <Label>Date of birth</Label>
+              <input type="date" className="rm-input" value={dob} onChange={e => setDob(e.target.value)} />
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <div style={{ flex: "1 1 200px" }}>
+                <Label>Time of birth</Label>
+                <input type="time" className="rm-input" value={tob} onChange={e => setTob(e.target.value)} />
               </div>
-              <div>
-                <Label>Date of birth</Label>
-                <input type="date" className="rm-input" value={dob} onChange={e => setDob(e.target.value)} />
+              <div style={{ flex: "1 1 200px" }}>
+                <Label>City of birth</Label>
+                <input type="text" className="rm-input" placeholder="Mumbai"
+                  value={pob} onChange={e => setPob(e.target.value)} />
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                <div style={{ flex: "1 1 130px" }}>
-                  <Label>Time of birth</Label>
-                  <input type="time" className="rm-input" value={tob} onChange={e => setTob(e.target.value)} />
-                </div>
-                <div style={{ flex: "1 1 130px" }}>
-                  <Label>City of birth</Label>
-                  <input type="text" className="rm-input" placeholder="Mumbai" value={pob} onChange={e => setPob(e.target.value)} />
-                </div>
-              </div>
-              <div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <div style={{ flex: "1 1 200px" }}>
                 <Label>Roast intensity</Label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
                   {(["Gentle", "Chaotic", "Unhinged"] as Intensity[]).map(lvl => (
@@ -1117,43 +1035,48 @@ export default function Home() {
                       border: `1px solid ${intensity === lvl ? C.gold : C.dim}`,
                       background: intensity === lvl ? C.goldFaint : "transparent",
                       color: intensity === lvl ? C.goldLight : C.muted,
-                      fontWeight: intensity === lvl ? 700 : 400,
-                      letterSpacing: "0.02em",
+                      fontWeight: intensity === lvl ? 700 : 400, letterSpacing: "0.02em",
                     }}>
                       {lvl}
                     </button>
                   ))}
                 </div>
               </div>
-              <div>
+              <div style={{ flex: "1 1 200px" }}>
                 <Label>Output language</Label>
-                <select className="rm-input" value={language} onChange={e => setLanguage(e.target.value)} style={{ cursor: "pointer" }}>
+                <select className="rm-input" value={language} onChange={e => setLanguage(e.target.value)}
+                  style={{ cursor: "pointer", height: 46 }}>
                   {LANGUAGES.map(lang => (
                     <option key={lang} value={lang} style={{ background: C.card, color: C.text }}>{lang}</option>
                   ))}
                 </select>
               </div>
-              {error && (
-                <p style={{ fontSize: 12, color: "#E8665A", textAlign: "center", fontFamily: F.ui }}>{error}</p>
-              )}
-              <button className="rm-btn" onClick={handleSubmit} style={{
-                marginTop: 4, height: 52, border: "none", borderRadius: 6,
-                background: `linear-gradient(135deg, ${C.gold} 0%, #9A6B18 100%)`,
-                color: "#07060D", fontSize: 15, fontFamily: F.display,
-                fontWeight: 700, letterSpacing: "0.05em",
-              }}>
-                CONSULT THE COSMOS →
-              </button>
             </div>
 
-            <p style={{ textAlign: "center", fontSize: 11, color: C.dim, marginTop: "1.6rem", lineHeight: 1.7, fontFamily: F.ui }}>
-              Zero astrology in the output.<br />Just your patterns, held up to a light.
-            </p>
+            {error && (
+              <p style={{ fontSize: 12, color: "#E8665A", textAlign: "center", fontFamily: F.ui }}>{error}</p>
+            )}
+
+            <button className="rm-btn" onClick={handleSubmit} style={{
+              marginTop: 4, height: 54, border: "none", borderRadius: 6,
+              background: `linear-gradient(135deg, ${C.gold} 0%, #9A6B18 100%)`,
+              color: "#07060D", fontSize: 15, fontFamily: F.display,
+              fontWeight: 700, letterSpacing: "0.05em",
+            }}>
+              CONSULT THE COSMOS →
+            </button>
           </div>
+
+          <p style={{
+            textAlign: "center", fontSize: 11, color: C.dim,
+            marginTop: "1.6rem", lineHeight: 1.7, fontFamily: F.ui,
+          }}>
+            Zero astrology in the output.<br />Just your patterns, held up to a light.
+          </p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   /* ═══════════════════════════════════════════════════════════
      LOADING SCREEN
@@ -1229,13 +1152,14 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, position: "relative" }}>
+      <NavBar />
       <div style={{
         position: "fixed", inset: 0,
         background: "radial-gradient(ellipse 80% 40% at 50% -5%, rgba(30,58,140,0.1) 0%, transparent 60%)",
         pointerEvents: "none", zIndex: 0,
       }} />
 
-      <div className="rm-result-content">
+      <div className="rm-result-content" style={{ paddingTop: 46 }}>
 
         {/* ── Hero — full width, planet flanked ────────────────────────── */}
         <div className="rm-hero-section rm-hero">
