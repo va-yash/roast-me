@@ -836,7 +836,7 @@ export default function Home() {
       const rr = await fetch(`${API_URL}/api/roast`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: cd.session_id, intensity }),
+        body: JSON.stringify({ session_id: cd.session_id, intensity, language }),
       });
       if (!rr.ok || !rr.body) throw new Error("Stream failed to start");
 
