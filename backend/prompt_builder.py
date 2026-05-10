@@ -620,7 +620,6 @@ RULES:
 - No filler, no fluff, no "the universe has a plan for you" 
   motivational poster energy
 - End with one grand ironic summary of their entire existence
-- Make it short - under 40 words
 
 LANGUAGE RULES (these matter a lot):
 - Write like a smart, funny person texting \u2014 not like a thesaurus
@@ -645,13 +644,14 @@ OUTPUT FORMAT \u2014 return ONLY valid JSON, no markdown, no extra text:
   "patterns": [
     {{
       "title": "emoji + short title (e.g. \U0001f300 The Commitment Ghost)",
-      "body": "2-3 sentences of the roast point",
+      "body": "2-3 sentences of the roast point — STRICT LIMIT: body + closer combined must be under 40 words total. Cut every word that isn't doing work.",
       "closer": "one final punchy kicker sentence for this point"
     }}
   ]
 }}
 - patterns must have 8 to 10 items
 - The last pattern ties everything together as the grand cosmic joke
+- COUNT YOUR WORDS. body + closer = under 40 words. No exceptions. Tighter is funnier.
 
 INTENSITY: {intensity_note}
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
