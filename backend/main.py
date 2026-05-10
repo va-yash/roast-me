@@ -69,6 +69,7 @@ class BirthInput(BaseModel):
 class RoastInput(BaseModel):
     session_id: str
     intensity:  str = "Unhinged"   # "Gentle" | "Chaotic" | "Unhinged"
+    language:   str = "English"    # Output language for the roast
 
 
 class AskInput(BaseModel):
@@ -275,6 +276,7 @@ async def get_roast(req: RoastInput):
             birth_dt=session["birth_utc"],
             query_date=datetime.utcnow(),
             intensity=req.intensity,
+            language=req.language,
         )
     except Exception as e:
         raise HTTPException(500, f"Roast prompt build failed: {e}")
