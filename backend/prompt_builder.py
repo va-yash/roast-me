@@ -644,14 +644,14 @@ OUTPUT FORMAT \u2014 return ONLY valid JSON, no markdown, no extra text:
   "patterns": [
     {{
       "title": "emoji + short title (e.g. \U0001f300 The Commitment Ghost)",
-      "body": "2-3 sentences of the roast point — STRICT LIMIT: body + closer combined must be under 40 words total. Cut every word that isn't doing work.",
+      "body": "3-4 sentences of the roast point — STRICT LIMIT: body + closer combined must be under 60 words total. Cut every word that isn't doing work.",
       "closer": "one final punchy kicker sentence for this point"
     }}
   ]
 }}
 - patterns must have 8 to 10 items
 - The last pattern ties everything together as the grand cosmic joke
-- COUNT YOUR WORDS. body + closer = under 40 words. No exceptions. Tighter is funnier.
+- COUNT YOUR WORDS. body + closer = under 60 words. No exceptions. Tighter is funnier.
 
 INTENSITY: {intensity_note}
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
