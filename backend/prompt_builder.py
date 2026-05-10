@@ -651,7 +651,7 @@ OUTPUT FORMAT \u2014 return ONLY valid JSON, no markdown, no extra text:
 - COUNT YOUR WORDS. body + closer = under 70 words. No exceptions. Tighter is funnier.
 
 INTENSITY: {intensity_note}
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+\nOUTPUT LANGUAGE: {language_note}\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 """
 
 
@@ -660,6 +660,7 @@ def build_roast_system_prompt(
     birth_dt: datetime,
     query_date: datetime = None,
     intensity: str = "Unhinged",
+    language:  str = "English",
 ) -> str:
     """
     Build the cosmic mirror system prompt from a calculated chart.
@@ -689,10 +690,16 @@ def build_roast_system_prompt(
     yogas         = detect_yogas(chart)
     yoga_block    = format_yoga_block(yogas)
     intensity_note = INTENSITY_NOTES.get(intensity, INTENSITY_NOTES["Unhinged"])
+    language_note = (
+        f"Write the ENTIRE response in {language}. "
+        f"All JSON string values must be in {language}. "
+        f"Use the natural script and grammar of {language}."
+    ) if language != "English" else "Write the entire response in English."
 
     return ROAST_SYSTEM_TEMPLATE.format(
         chart_block    = chart_block,
         dasha_block    = dasha_block,
         yoga_block     = yoga_block,
         intensity_note = intensity_note,
+        language_note  = language_note,
     )
