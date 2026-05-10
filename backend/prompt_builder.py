@@ -573,20 +573,22 @@ if __name__ == "__main__":
 
 INTENSITY_NOTES: dict[str, str] = {
     "Gentle":   (
-        "Soft absurdism. The metaphors are cosy and a little surreal. "
-        "They should laugh quietly, nod, and feel warmly understood. "
-        "Think: a wise friend who finds them endearing."
+        "Warm and gently ridiculous. Poke fun like a best friend who has seen too much. "
+        "The jokes land soft but they DO land. No comfort food energy — more like 'I say this with love "
+        "and also you are a lot.' Think: a group chat roast where everyone still likes each other at the end."
     ),
     "Chaotic":  (
-        "Specific and unhinged. The absurd images should be so accurate "
-        "they immediately want to show someone the screen. "
-        "Think: a narrator who has been watching them for three years and finds it all very entertaining."
+        "Sharp, specific, and gleefully mean in a fun way. The kind of roast where they laugh, "
+        "then go quiet for a second, then laugh again. "
+        "Scenarios should be so weirdly on-point they feel slightly stalked. "
+        "Think: a comedian who did their homework and has OPINIONS."
     ),
     "Unhinged": (
-        "Full cosmic narrator energy. Every contradiction is a feature. "
-        "Every 'flaw' is secretly magnificent. The scenarios are absurd, vivid, and hyper-specific. "
-        "They should want to send this to their therapist and their best friend simultaneously. "
-        "Think: the universe wrote their biography and found the whole thing hilarious and impressive."
+        "Full dark comedy. Zero mercy, maximum accuracy. Treat their life like a true crime documentary "
+        "where the only victim is their own decision-making. "
+        "Every pattern should feel like a confession they never made out loud. "
+        "The roast should sting just enough that they screenshot it and send it to three people. "
+        "Think: the universe hired a stand-up comedian to read their file aloud at their own funeral."
     ),
 }
 
@@ -596,14 +598,14 @@ I will give you my Vedic birth chart details.
 
 Your job is NOT to give me a reading.
 Your job is to roast my life using my chart as evidence.
-════════════════════════════════════════════════════════
-BIRTH CHART DATA  (your source material — invisible to the reader)
-════════════════════════════════════════════════════════
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+BIRTH CHART DATA  (your source material \u2014 invisible to the reader)
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 {chart_block}
 
-════════════════════════════════════════════════════════
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 {dasha_block}
-════════════════════════════════════════════════════════
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
 {yoga_block}
 
@@ -611,19 +613,38 @@ RULES:
 - Zero astrology jargon. No planet names, no house numbers, 
   no nakshatra names. Nothing technical.
 - Translate every placement into a HUMAN BEHAVIOUR or LIFE PATTERN
-- Make it funny. Dry humour, irony, self-aware jokes.
-- Each point should feel like you're describing someone's 
-  unhinged personality at a dinner party
+- Make it funny. Dry humour, dark irony, self-aware jokes. 
+  The roast should sting just a little \u2014 not wound, just sting.
+- Each point should feel like you're describing someone's
+  unhinged personality at a dinner party where everyone already knows
 - No filler, no fluff, no "the universe has a plan for you" 
   motivational poster energy
 - End with one grand ironic summary of their entire existence
+- Make it short - under 40 words
 
-OUTPUT FORMAT — return ONLY valid JSON, no markdown, no extra text:
+LANGUAGE RULES (these matter a lot):
+- Write like a smart, funny person texting \u2014 not like a thesaurus
+- Use everyday words. If a normal person wouldn't say it out loud, don't use it
+- Banned words and phrases: inexplicably, luminous, profound, paradox, 
+  simultaneously, intrinsically, essentially, ultimately, magnitude,
+  "the universe conspires", "cosmic blueprint", "latent", "embody"
+- Instead of fancy: use punchy. Instead of poetic: use specific.
+- Good example: "You google yourself when you're sad"
+- Bad example: "Your ego inexplicably magnetises public scrutiny"
+- One-liner closers should land like a punchline, not a fortune cookie
+
+HUMOUR STYLE:
+- Dark but not cruel. Honest but not mean-spirited.
+- Roast the PATTERN, not the person. The joke is always "wow, you really do this"
+- Callbacks work well \u2014 if you set something up early, land it at the end
+- The best roast lines are the ones they immediately read to someone else
+
+OUTPUT FORMAT \u2014 return ONLY valid JSON, no markdown, no extra text:
 {{
   "cosmic_title": "A short punchy title (4-7 words) summarising their entire cosmic joke",
   "patterns": [
     {{
-      "title": "emoji + short title (e.g. 🌀 The Commitment Ghost)",
+      "title": "emoji + short title (e.g. \U0001f300 The Commitment Ghost)",
       "body": "2-3 sentences of the roast point",
       "closer": "one final punchy kicker sentence for this point"
     }}
@@ -633,7 +654,7 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no extra text:
 - The last pattern ties everything together as the grand cosmic joke
 
 INTENSITY: {intensity_note}
-════════════════════════════════════════════════════════
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 """
 
 
