@@ -43,7 +43,7 @@ export default function KnowTheCreator() {
           color: C.gold, letterSpacing: "0.1em", marginRight: 18,
           textDecoration: "none",
         }}>
-          ROAST-ME.ME
+          ROAST-ME
         </a>
         <span style={{ color: C.dim, marginRight: 14, fontSize: 12 }}>|</span>
         <a href="/know-the-creator" style={{
@@ -205,7 +205,7 @@ export default function KnowTheCreator() {
             fontSize: 10, color: C.dim, fontFamily: F.ui,
             letterSpacing: "0.1em", textAlign: "center",
           }}>
-            ROAST-ME.ME · COSMIC DAMAGE REPORTS
+            ROAST-ME · COSMIC DAMAGE REPORTS
           </p>
         </div>
       </div>
