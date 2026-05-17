@@ -10,7 +10,7 @@ const F = {
 };
 
 const FORMSPREE_ID = process.env.NEXT_PUBLIC_FORMSPREE_ID ?? "mqengjav";
-const COSMOS_CHAT_URL = "#cosmos";
+const COSMOS_CHAT_URL = "https://my-destiny-murex.vercel.app/";
 
 const DARK = {
   bg: "#060A14", card: "#0C1422", gold: "#C08B2F", goldLight: "#DEB86A",
