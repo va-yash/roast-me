@@ -75,13 +75,13 @@ export default function Feedback() {
 
   const emojiBtn = (id: Rating, emoji: string, label: string) => (
     <button onClick={() => setRating(id)} title={label} style={{
-      fontSize: 28, background: "none",
+      fontSize: 28,
       border: `2px solid ${rating === id ? C.gold : C.border}`,
       borderRadius: "50%", width: 56, height: 56, cursor: "pointer",
-      background: rating === id ? C.goldFaint : "none" as unknown as string,
+      background: rating === id ? C.goldFaint : "transparent",
       transform: rating === id ? "scale(1.12)" : "scale(1)",
       transition: "all 0.15s ease",
-    } as React.CSSProperties}>
+    }}>
       {emoji}
     </button>
   );
