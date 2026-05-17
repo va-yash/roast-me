@@ -795,6 +795,75 @@ function ProfileModal({ onClose, onSave, initial }: {
   );
 }
 
+/* ─── Platform logos (SVG) ────────────────────────────────────────────────── */
+
+function IgLogo({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <defs>
+        <linearGradient id="ig-g" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#F9CE34" />
+          <stop offset="25%"  stopColor="#EE2A7B" />
+          <stop offset="75%"  stopColor="#9B20AC" />
+          <stop offset="100%" stopColor="#4C2FBA" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="20" height="20" rx="5.5" ry="5.5" fill="url(#ig-g)" />
+      <circle cx="12" cy="12" r="4.2" stroke="#fff" strokeWidth="1.8" fill="none" />
+      <circle cx="17.2" cy="6.8" r="1.2" fill="#fff" />
+    </svg>
+  );
+}
+
+function SnapLogo({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#FFFC00" />
+      <path d="M12 3.5c-2.2 0-3.8 1.55-3.8 3.8v.95c-.5-.12-.9-.05-1.1.22-.22.3-.1.75.35 1.1.1.08.1.18.06.3-.22.58-.68 1.05-1.3 1.35-.18.09-.2.28-.05.4.4.3 1.05.5 1.85.5.3 0 .6-.03.88-.08l.05.08c.25.38.8.65 1.55.78.18.03.2.15.12.3-.28.48-.85.88-1.56 1.08-.2.06-.2.22 0 .3.55.2 1.3.34 2.18.34.88 0 1.63-.14 2.18-.34.2-.08.2-.24 0-.3-.7-.2-1.28-.6-1.56-1.08-.08-.15-.06-.27.12-.3.75-.13 1.3-.4 1.55-.78l.05-.08c.28.05.58.08.88.08.8 0 1.45-.2 1.85-.5.15-.12.13-.31-.05-.4-.62-.3-1.08-.77-1.3-1.35-.04-.12-.04-.22.06-.3.45-.35.57-.8.35-1.1-.2-.27-.6-.34-1.1-.22V7.3c0-2.25-1.6-3.8-3.8-3.8z" fill="#222" />
+    </svg>
+  );
+}
+
+function WaLogo({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#25D366" />
+      <path fillRule="evenodd" clipRule="evenodd"
+        d="M12 4.5A7.5 7.5 0 0 0 5.28 15.6L4.5 19.5l4.02-.75A7.5 7.5 0 1 0 12 4.5zm-2.7 4.25c.15 0 .32.01.46.35.17.4.55 1.35.6 1.45.05.1.08.22.01.35-.06.12-.1.2-.2.3-.1.1-.2.22-.29.3-.1.09-.2.19-.09.37.12.18.52.85 1.11 1.38.76.68 1.4.89 1.6.99.2.1.32.08.44-.05.12-.13.5-.58.63-.78.13-.2.26-.17.44-.1.18.07 1.13.53 1.32.63.2.1.33.15.38.23.05.1.05.55-.16 1.08-.2.53-1.17 1-1.6 1.04-.44.05-.85.06-2.73-.7-2.26-.9-3.7-3.23-3.8-3.38-.12-.15-.95-1.27-.95-2.43 0-1.15.6-1.72.82-1.95.21-.23.46-.29.62-.29z"
+        fill="#fff" />
+    </svg>
+  );
+}
+
+function FbLogo({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#1877F2" />
+      <path d="M15.12 7.94H13.4c-.22 0-.46.29-.46.68V9.9h2.18l-.33 2.18H12.94V19h-2.52v-6.92H8.88V9.9h1.54V8.35C10.42 6.52 11.56 5.5 13.2 5.5c.77 0 1.6.06 1.92.09v2.35z"
+        fill="#fff" />
+    </svg>
+  );
+}
+
+function XLogo({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#000" />
+      <path d="M13.37 10.94 18.24 5.5h-1.15l-4.23 4.92L9.44 5.5H5.5l5.12 7.45L5.5 18.5h1.15l4.48-5.21 3.58 5.21H18.5l-5.13-7.56zm-1.59 1.85-.52-.74-4.13-5.91h1.78l3.33 4.77.52.74 4.33 6.2h-1.78l-3.53-5.06z"
+        fill="#fff" />
+    </svg>
+  );
+}
+
+function CopyLogo({ size = 24, color = "#64748B" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="9" y="9" width="11" height="13" rx="2" stroke={color} strokeWidth="1.8" fill="none" />
+      <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /* ─── NavBar ──────────────────────────────────────────────────────────────────── */
 
 function NavBar({
@@ -1178,24 +1247,46 @@ export default function Home() {
     const planet      = chart.dominant_planet ?? "Saturn";
     const shareText   = buildShareText(shareName, cosmicTitle, planet, roastTitle, body, closer);
 
-    if (platform === "instagram" || platform === "snapchat") {
+    const imageplatforms: Platform[] = ["instagram", "snapchat", "whatsapp", "facebook"];
+
+    if (imageplatforms.includes(platform)) {
       setGenerating(true);
       try {
         const blob = await genStoryBlob(shareName, cosmicTitle, planet, roastTitle, body);
         const file = new File([blob], "cosmic-roast.png", { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], text: shareText });
+
+        if (platform === "whatsapp") {
+          // Try native share with image first (works on mobile), else download + open WA
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], text: shareText });
+          } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = "cosmic-roast.png"; a.click();
+            URL.revokeObjectURL(url);
+            setTimeout(() => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank"), 800);
+          }
+        } else if (platform === "facebook") {
+          // Facebook sharer can't accept file uploads via URL — download image then open Facebook
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], text: shareText });
+          } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = "cosmic-roast.png"; a.click();
+            URL.revokeObjectURL(url);
+            setTimeout(() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://roast-me.me")}`, "_blank"), 800);
+          }
         } else {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a"); a.href = url; a.download = "cosmic-roast.png"; a.click();
-          URL.revokeObjectURL(url);
+          // instagram / snapchat
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], text: shareText });
+          } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = "cosmic-roast.png"; a.click();
+            URL.revokeObjectURL(url);
+          }
         }
       } catch (e) { console.error("Story share failed:", e); }
       finally { setGenerating(false); }
-    } else if (platform === "whatsapp") {
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
-    } else if (platform === "facebook") {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://roast-me.me")}&quote=${encodeURIComponent(shareText)}`, "_blank");
     } else if (platform === "twitter") {
       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");
     } else if (platform === "copy") {
@@ -1208,7 +1299,8 @@ export default function Home() {
 
   const handlePlatform = useCallback((platform: Platform) => {
     const idx = share.idx;
-    if ((platform === "instagram" || platform === "snapchat") && !name.trim()) {
+    const needsName: Platform[] = ["instagram", "snapchat", "whatsapp", "facebook"];
+    if (needsName.includes(platform) && !name.trim()) {
       closeShare();
       setNamePrompt({ open: true, platform, idx });
       return;
@@ -1552,30 +1644,41 @@ export default function Home() {
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {([
-                  { id: "instagram" as Platform, icon: "📸", label: "Instagram Story", note: "STORY IMAGE" },
-                  { id: "snapchat"  as Platform, icon: "👻", label: "Snapchat Story",  note: "STORY IMAGE" },
-                  { id: "whatsapp" as Platform,  icon: "💬", label: "WhatsApp",         note: "" },
-                  { id: "facebook" as Platform,  icon: "📘", label: "Facebook",         note: "" },
-                  { id: "twitter"  as Platform,  icon: "𝕏",  label: "Twitter / X",     note: "" },
-                  { id: "copy"     as Platform,  icon: "📋", label: "Copy Text",        note: "" },
-                ]).map(({ id, icon, label, note }) => (
-                  <button key={id} className="rm-btn" disabled={generating} onClick={() => handlePlatform(id)} style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    padding: "12px 16px", borderRadius: 8,
-                    background: "rgba(255,255,255,0.03)", border: `1px solid ${C.border}`,
-                    color: C.text, fontFamily: F.ui, fontWeight: 600,
-                    fontSize: 14, textAlign: "left", width: "100%",
-                    opacity: generating ? 0.5 : 1,
-                  }}>
-                    <span style={{ fontSize: 20 }}>{icon}</span>
-                    <span>{label}</span>
-                    {note && (
-                      <span style={{ marginLeft: "auto", fontSize: 10, color: generating && (id === "instagram" || id === "snapchat") ? C.gold : C.muted, letterSpacing: "0.06em" }}>
-                        {generating && (id === "instagram" || id === "snapchat") ? "Generating…" : note}
+                  { id: "instagram" as Platform, Logo: IgLogo,   label: "Instagram Story", note: "IMAGE" },
+                  { id: "snapchat"  as Platform, Logo: SnapLogo, label: "Snapchat Story",   note: "IMAGE" },
+                  { id: "whatsapp"  as Platform, Logo: WaLogo,   label: "WhatsApp",          note: "IMAGE" },
+                  { id: "facebook"  as Platform, Logo: FbLogo,   label: "Facebook",           note: "IMAGE" },
+                  { id: "twitter"   as Platform, Logo: XLogo,    label: "Twitter / X",        note: "" },
+                  { id: "copy"      as Platform, Logo: null,      label: "Copy Text",          note: "" },
+                ]).map(({ id, Logo, label, note }) => {
+                  const isGenerating = generating && ["instagram","snapchat","whatsapp","facebook"].includes(id);
+                  return (
+                    <button key={id} className="rm-btn" disabled={generating} onClick={() => handlePlatform(id)} style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      padding: "12px 16px", borderRadius: 8,
+                      background: "rgba(255,255,255,0.03)", border: `1px solid ${C.border}`,
+                      color: C.text, fontFamily: F.ui, fontWeight: 600,
+                      fontSize: 14, textAlign: "left", width: "100%",
+                      opacity: generating && !isGenerating ? 0.4 : 1,
+                    }}>
+                      <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+                        {Logo ? <Logo size={26} /> : <CopyLogo size={26} color={C.muted} />}
                       </span>
-                    )}
-                  </button>
-                ))}
+                      <span>{label}</span>
+                      {note && (
+                        <span style={{
+                          marginLeft: "auto", fontSize: 9, fontWeight: 700,
+                          letterSpacing: "0.08em", padding: "2px 7px", borderRadius: 4,
+                          background: isGenerating ? C.goldFaint : "rgba(255,255,255,0.06)",
+                          border: `1px solid ${isGenerating ? C.goldBorder : C.border}`,
+                          color: isGenerating ? C.gold : C.muted,
+                        }}>
+                          {isGenerating ? "GENERATING…" : note}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
