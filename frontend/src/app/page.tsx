@@ -44,7 +44,7 @@ const LIGHT = {
   overlayBg:  "rgba(30,20,10,0.55)",    selectBg:   "#FFFDF7",
 } as const;
 
-type Colors = typeof DARK;
+type Colors = Record<keyof typeof DARK, string>;
 
 interface ThemeCtxType { C: Colors; isDark: boolean; toggleTheme: () => void; }
 const ThemeCtx = createContext<ThemeCtxType>({ C: DARK, isDark: true, toggleTheme: () => {} });
