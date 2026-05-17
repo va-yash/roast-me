@@ -16,7 +16,7 @@ interface ChartSummary {
   sun_sign: string; moon_sign: string; location: string;
   dominant_planet: string;
 }
-interface UserProfile { name: string; email: string; }
+interface UserProfile { name: string; email: string; password?: string; }
 
 type Screen    = "intro" | "input" | "loading" | "result";
 type Intensity = "Gentle" | "Chaotic" | "Unhinged";
@@ -66,8 +66,7 @@ const FORMSPREE_ID    = process.env.NEXT_PUBLIC_FORMSPREE_ID ?? "mqengjav";
 //   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 const SUPABASE_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_KEY    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-// TODO: Replace with your Cosmos chat URL
-const COSMOS_CHAT_URL = "#cosmos";
+const COSMOS_CHAT_URL = "https://my-destiny-murex.vercel.app/";
 
 /* ─── Supabase profile saver ─────────────────────────────────────────────────── */
 // Run this SQL in your Supabase dashboard first:
@@ -190,7 +189,7 @@ input[type=time]::-webkit-calendar-picker-indicator { filter: invert(0.45) sepia
 .rm-star-twinkle { animation: rmTwinkle var(--d,3s) ease-in-out infinite; }
 
 .rm-mobile-menu {
-  position: fixed; top: 46px; left: 0; right: 0; z-index: 199;
+  position: fixed; top: 62px; left: 0; right: 0; z-index: 199;
   background: var(--rm-nav-bg); backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--rm-border);
   padding: 1rem 1.5rem 1.25rem;
@@ -210,6 +209,206 @@ input[type=time]::-webkit-calendar-picker-indicator { filter: invert(0.45) sepia
 .rm-card:hover .rm-copy-btn { opacity: 1; }
 .rm-copy-btn:hover { background: var(--rm-gold-faint); border-color: var(--rm-gold-border); }
 `;
+
+/* ─── Canvas planet renderer ──────────────────────────────────────────────── */
+
+function drawPlanetOnCanvas(ctx: CanvasRenderingContext2D, planet: string, color: string, cx: number, cy: number, r: number) {
+  ctx.save();
+  switch (planet) {
+    case "Sun": {
+      // Outer glow
+      const sg = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 2.2);
+      sg.addColorStop(0, color + "55"); sg.addColorStop(1, "transparent");
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(cx, cy, r * 2.2, 0, Math.PI * 2); ctx.fill();
+      // Rays
+      for (let i = 0; i < 12; i++) {
+        const a = (i * 30 * Math.PI) / 180;
+        ctx.save(); ctx.strokeStyle = color; ctx.globalAlpha = 0.7; ctx.lineWidth = r * 0.08;
+        ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(cx + r * 1.1 * Math.cos(a), cy + r * 1.1 * Math.sin(a));
+        ctx.lineTo(cx + r * 1.5 * Math.cos(a), cy + r * 1.5 * Math.sin(a)); ctx.stroke(); ctx.restore();
+      }
+      // Main disk
+      const sunG = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
+      sunG.addColorStop(0, "#FFEAA0"); sunG.addColorStop(0.4, color); sunG.addColorStop(1, "#B86000");
+      ctx.fillStyle = sunG; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+      // Sunspots
+      ctx.fillStyle = "rgba(180,80,0,0.5)";
+      ctx.beginPath(); ctx.ellipse(cx - r*0.25, cy - r*0.2, r*0.14, r*0.1, -0.3, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx + r*0.3, cy + r*0.25, r*0.09, r*0.07, 0.5, 0, Math.PI*2); ctx.fill();
+      break;
+    }
+    case "Moon": {
+      // Glow
+      const mg = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 1.8);
+      mg.addColorStop(0, "#C0D0E822"); mg.addColorStop(1, "transparent");
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(cx, cy, r * 1.8, 0, Math.PI * 2); ctx.fill();
+      // Main disc
+      const moonG = ctx.createRadialGradient(cx - r*0.2, cy - r*0.2, 0, cx, cy, r);
+      moonG.addColorStop(0, "#D8E8F8"); moonG.addColorStop(0.6, color); moonG.addColorStop(1, "#8090A8");
+      ctx.fillStyle = moonG; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+      // Dark side crescent
+      ctx.fillStyle = "#060A14"; ctx.globalAlpha = 0.55;
+      ctx.beginPath(); ctx.arc(cx + r * 0.25, cy, r * 0.82, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Craters
+      const craters = [[-0.35, -0.2, 0.18], [0.1, 0.35, 0.12], [-0.15, 0.38, 0.09], [-0.42, 0.18, 0.1]];
+      for (const [ox, oy, cr] of craters) {
+        ctx.fillStyle = "rgba(90,105,130,0.6)";
+        ctx.beginPath(); ctx.arc(cx + ox*r, cy + oy*r, cr*r, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = "rgba(120,140,170,0.35)"; ctx.lineWidth = r*0.025;
+        ctx.beginPath(); ctx.arc(cx + ox*r, cy + oy*r, cr*r, 0, Math.PI*2); ctx.stroke();
+      }
+      break;
+    }
+    case "Mars": {
+      const marg = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 1.6);
+      marg.addColorStop(0, color + "33"); marg.addColorStop(1, "transparent");
+      ctx.fillStyle = marg; ctx.beginPath(); ctx.arc(cx, cy, r * 1.6, 0, Math.PI * 2); ctx.fill();
+      const marsG = ctx.createRadialGradient(cx - r*0.25, cy - r*0.25, 0, cx, cy, r);
+      marsG.addColorStop(0, "#E86040"); marsG.addColorStop(0.5, color); marsG.addColorStop(1, "#7A2010");
+      ctx.fillStyle = marsG; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+      // Dark surface bands
+      ctx.fillStyle = "rgba(100,20,0,0.35)";
+      ctx.beginPath(); ctx.ellipse(cx, cy - r*0.2, r*0.9, r*0.32, 0.1, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx, cy + r*0.18, r*0.85, r*0.2, -0.1, 0, Math.PI*2); ctx.fill();
+      // Polar ice cap
+      ctx.fillStyle = "rgba(230,230,220,0.8)";
+      ctx.beginPath(); ctx.ellipse(cx, cy - r*0.78, r*0.42, r*0.18, 0, 0, Math.PI*2); ctx.fill();
+      // Craters / Valles
+      ctx.strokeStyle = "rgba(80,15,0,0.45)"; ctx.lineWidth = r * 0.06;
+      ctx.beginPath(); ctx.arc(cx - r*0.3, cy + r*0.1, r*0.2, 0, Math.PI*2); ctx.stroke();
+      break;
+    }
+    case "Mercury": {
+      const mercG = ctx.createRadialGradient(cx - r*0.2, cy - r*0.2, 0, cx, cy, r);
+      mercG.addColorStop(0, "#A0B0C0"); mercG.addColorStop(0.4, color); mercG.addColorStop(1, "#3A4A55");
+      ctx.fillStyle = mercG; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+      // Terminator
+      ctx.fillStyle = "rgba(10,15,25,0.4)";
+      ctx.beginPath(); ctx.arc(cx + r*0.35, cy, r, 0, Math.PI*2); ctx.fill();
+      // Craters
+      const merc = [[-0.28, -0.25, 0.22], [0.2, 0.3, 0.17], [-0.12, 0.36, 0.12], [0.25, -0.18, 0.1], [-0.05, 0.05, 0.06]];
+      for (const [ox, oy, cr] of merc) {
+        const cg = ctx.createRadialGradient(cx+ox*r-cr*r*0.3, cy+oy*r-cr*r*0.3, 0, cx+ox*r, cy+oy*r, cr*r);
+        cg.addColorStop(0, "rgba(60,70,80,0.75)"); cg.addColorStop(0.7, "rgba(40,50,60,0.55)"); cg.addColorStop(1, "rgba(80,95,110,0.3)");
+        ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx + ox*r, cy + oy*r, cr*r, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = "rgba(140,160,180,0.3)"; ctx.lineWidth = cr*r*0.2;
+        ctx.beginPath(); ctx.arc(cx + ox*r, cy + oy*r, cr*r, 0, Math.PI*2); ctx.stroke();
+      }
+      break;
+    }
+    case "Jupiter": {
+      // Clip to planet circle
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+      const jupG = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      jupG.addColorStop(0, "#F0C870"); jupG.addColorStop(0.5, color); jupG.addColorStop(1, "#7A5020");
+      ctx.fillStyle = jupG; ctx.fillRect(cx-r, cy-r, r*2, r*2);
+      // Bands
+      const bands = [[-0.55, 0.18, "#7A4A18", 0.5], [-0.25, 0.13, "#C09040", 0.3], [-0.04, 0.1, "#7A4A18", 0.45], [0.16, 0.15, "#C09040", 0.28], [0.38, 0.17, "#7A4A18", 0.42]];
+      for (const [by, bh, bc, ba] of bands) {
+        ctx.fillStyle = bc as string; ctx.globalAlpha = ba as number;
+        ctx.fillRect(cx - r, cy + (by as number)*r, r*2, (bh as number)*r);
+      }
+      ctx.globalAlpha = 1;
+      // Great Red Spot
+      ctx.save(); ctx.translate(cx + r*0.35, cy + r*0.2);
+      const grs = ctx.createRadialGradient(0, 0, 0, 0, 0, r*0.22);
+      grs.addColorStop(0, "rgba(180,40,20,0.9)"); grs.addColorStop(0.6, "rgba(150,30,10,0.7)"); grs.addColorStop(1, "transparent");
+      ctx.fillStyle = grs; ctx.beginPath(); ctx.ellipse(0, 0, r*0.22, r*0.14, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+      ctx.restore();
+      break;
+    }
+    case "Venus": {
+      // Thick cloud glow
+      const vg = ctx.createRadialGradient(cx, cy, r*0.7, cx, cy, r*1.6);
+      vg.addColorStop(0, color + "55"); vg.addColorStop(0.5, color + "22"); vg.addColorStop(1, "transparent");
+      ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(cx, cy, r*1.6, 0, Math.PI*2); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+      const venG = ctx.createRadialGradient(cx - r*0.15, cy - r*0.2, 0, cx, cy, r);
+      venG.addColorStop(0, "#FFEAA0"); venG.addColorStop(0.4, color); venG.addColorStop(1, "#A08010");
+      ctx.fillStyle = venG; ctx.fillRect(cx-r, cy-r, r*2, r*2);
+      // Cloud swirls
+      for (let i = 0; i < 4; i++) {
+        ctx.strokeStyle = `rgba(220,200,80,${0.25 - i*0.04})`; ctx.lineWidth = r * 0.12;
+        ctx.beginPath(); ctx.ellipse(cx, cy - r*(0.4 - i*0.25), r*0.85, r*0.12, 0.15*i, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
+      break;
+    }
+    case "Saturn": {
+      // Rings (behind)
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(1, 0.28);
+      for (const [ri, ro, rc, ra] of [[r*1.25, r*1.65, "#D4B870", 0.55], [r*1.68, r*1.98, "#B8984A", 0.45], [r*2.0, r*2.25, "#C4A860", 0.35]]) {
+        const rg = ctx.createRadialGradient(0, 0, ri as number, 0, 0, ro as number);
+        rg.addColorStop(0, `rgba(212,184,112,${ra})`); rg.addColorStop(0.5, rc as string); rg.addColorStop(1, "transparent");
+        ctx.fillStyle = rg;
+        ctx.beginPath(); ctx.arc(0, 0, ro as number, 0, Math.PI*2); ctx.arc(0, 0, ri as number, 0, Math.PI*2, true); ctx.fill();
+      }
+      ctx.restore();
+      // Planet
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+      const satG = ctx.createRadialGradient(cx - r*0.1, cy - r*0.1, 0, cx, cy, r);
+      satG.addColorStop(0, "#E8D898"); satG.addColorStop(0.5, color); satG.addColorStop(1, "#887848");
+      ctx.fillStyle = satG; ctx.fillRect(cx-r, cy-r, r*2, r*2);
+      ctx.fillStyle = "rgba(140,110,60,0.35)";
+      ctx.beginPath(); ctx.ellipse(cx, cy - r*0.2, r, r*0.14, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx, cy + r*0.22, r, r*0.1, 0, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      // Ring front (over planet)
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(1, 0.28);
+      ctx.fillStyle = "rgba(6,10,20,0.85)";
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = "rgba(212,184,112,0.5)"; ctx.lineWidth = r*0.18;
+      ctx.beginPath(); ctx.arc(0, 0, r*1.45, Math.PI*0.05, Math.PI*0.95); ctx.stroke();
+      ctx.strokeStyle = "rgba(184,152,74,0.4)"; ctx.lineWidth = r*0.25;
+      ctx.beginPath(); ctx.arc(0, 0, r*1.82, Math.PI*0.05, Math.PI*0.95); ctx.stroke();
+      ctx.restore();
+      break;
+    }
+    case "Rahu": {
+      const rg = ctx.createRadialGradient(cx, cy, r*0.5, cx, cy, r*2);
+      rg.addColorStop(0, "#9070C055"); rg.addColorStop(1, "transparent");
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(cx, cy, r*2, 0, Math.PI*2); ctx.fill();
+      const rahuG = ctx.createRadialGradient(cx + r*0.2, cy - r*0.2, 0, cx, cy, r);
+      rahuG.addColorStop(0, "#8060A8"); rahuG.addColorStop(0.5, color); rahuG.addColorStop(1, "#1A1030");
+      ctx.fillStyle = rahuG; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      // Shadow
+      ctx.fillStyle = "rgba(6,10,20,0.5)"; ctx.beginPath(); ctx.arc(cx + r*0.3, cy - r*0.2, r*0.85, 0, Math.PI*2); ctx.fill();
+      // Aura rings
+      for (let i = 1; i <= 3; i++) {
+        ctx.strokeStyle = `rgba(144,112,192,${0.22 - i*0.06})`; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, r + i*r*0.15, 0, Math.PI*2); ctx.stroke();
+      }
+      break;
+    }
+    case "Ketu": {
+      const kg = ctx.createRadialGradient(cx, cy, r*0.5, cx, cy, r*1.8);
+      kg.addColorStop(0, "#C0606055"); kg.addColorStop(1, "transparent");
+      ctx.fillStyle = kg; ctx.beginPath(); ctx.arc(cx, cy, r*1.8, 0, Math.PI*2); ctx.fill();
+      const ketuG = ctx.createRadialGradient(cx + r*0.2, cy - r*0.2, 0, cx, cy, r);
+      ketuG.addColorStop(0, "#C07060"); ketuG.addColorStop(0.5, color); ketuG.addColorStop(1, "#3A1010");
+      ctx.fillStyle = ketuG; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "rgba(6,10,20,0.45)"; ctx.beginPath(); ctx.arc(cx + r*0.28, cy - r*0.18, r*0.82, 0, Math.PI*2); ctx.fill();
+      // Tail / comet tail
+      ctx.save();
+      for (let i = 0; i < 3; i++) {
+        const tg = ctx.createLinearGradient(cx + r*0.6, cy + r*(0.5 + i*0.15), cx + r*2.8, cy + r*(1.8 + i*0.25));
+        tg.addColorStop(0, `rgba(180,80,60,${0.4 - i*0.1})`); tg.addColorStop(1, "transparent");
+        ctx.strokeStyle = tg; ctx.lineWidth = r * (0.1 - i*0.025); ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(cx + r*0.6, cy + r*(0.5 + i*0.15)); ctx.lineTo(cx + r*2.8, cy + r*(1.8 + i*0.25)); ctx.stroke();
+      }
+      ctx.restore();
+      break;
+    }
+    default: {
+      const dg = ctx.createRadialGradient(cx - r*0.2, cy - r*0.2, 0, cx, cy, r);
+      dg.addColorStop(0, "#E0D8C8"); dg.addColorStop(1, color);
+      ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
 
 /* ─── Canvas story generator ──────────────────────────────────────────────────── */
 
@@ -232,60 +431,153 @@ async function genStoryBlob(name: string, cosmicTitle: string, planet: string, r
   cv.width = 1080; cv.height = 1920;
   const x = cv.getContext("2d")!;
 
+  /* ── Deep space background ── */
   const bg = x.createLinearGradient(0, 0, 0, 1920);
-  bg.addColorStop(0, "#060A14"); bg.addColorStop(0.5, "#0C1422"); bg.addColorStop(1, "#060A14");
+  bg.addColorStop(0, "#03060F");
+  bg.addColorStop(0.35, "#080E1C");
+  bg.addColorStop(0.65, "#060A18");
+  bg.addColorStop(1, "#020408");
   x.fillStyle = bg; x.fillRect(0, 0, 1080, 1920);
 
-  x.fillStyle = "rgba(255,255,255,0.6)";
-  for (let i = 0; i < 200; i++) {
-    const sx = (i * 197 + 37) % 1080, sy = (i * 313 + 89) % 1920;
-    const sr = i % 5 === 0 ? 2 : i % 3 === 0 ? 1.3 : 0.8;
+  /* ── Nebula glows ── */
+  const neb1 = x.createRadialGradient(200, 400, 0, 200, 400, 600);
+  neb1.addColorStop(0, "rgba(40,20,100,0.35)"); neb1.addColorStop(1, "transparent");
+  x.fillStyle = neb1; x.fillRect(0, 0, 1080, 1920);
+
+  const neb2 = x.createRadialGradient(880, 1100, 0, 880, 1100, 550);
+  neb2.addColorStop(0, "rgba(100,30,20,0.25)"); neb2.addColorStop(1, "transparent");
+  x.fillStyle = neb2; x.fillRect(0, 0, 1080, 1920);
+
+  const neb3 = x.createRadialGradient(540, 960, 0, 540, 960, 480);
+  neb3.addColorStop(0, "rgba(20,40,90,0.3)"); neb3.addColorStop(1, "transparent");
+  x.fillStyle = neb3; x.fillRect(0, 0, 1080, 1920);
+
+  /* ── Stars ── */
+  const starData = Array.from({ length: 280 }, (_, i) => ({
+    sx: (i * 197 + 37) % 1080, sy: (i * 313 + 89) % 1920,
+    sr: i % 7 === 0 ? 3 : i % 4 === 0 ? 2 : i % 3 === 0 ? 1.4 : 0.7,
+    bright: i % 5 === 0,
+  }));
+  for (const { sx, sy, sr, bright } of starData) {
+    if (bright) {
+      const sg = x.createRadialGradient(sx, sy, 0, sx, sy, sr * 4);
+      sg.addColorStop(0, "rgba(255,255,255,0.9)"); sg.addColorStop(1, "transparent");
+      x.fillStyle = sg; x.beginPath(); x.arc(sx, sy, sr * 4, 0, Math.PI * 2); x.fill();
+    }
+    x.fillStyle = bright ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)";
     x.beginPath(); x.arc(sx, sy, sr, 0, Math.PI * 2); x.fill();
   }
 
+  /* ── Planet  ── */
   const pm = PLANET_META[planet] ?? PLANET_META.Saturn;
-  x.globalAlpha = 0.52; x.fillStyle = pm.color;
-  x.beginPath(); x.arc(-60, 960, 400, 0, Math.PI * 2); x.fill();
-  x.globalAlpha = 0.28; x.beginPath(); x.ellipse(-60, 880, 360, 80, 0, 0, Math.PI * 2); x.fill();
-  x.globalAlpha = 0.42; x.fillStyle = pm.color;
-  x.beginPath(); x.arc(1140, 960, 340, 0, Math.PI * 2); x.fill();
-  x.globalAlpha = 1;
+  const planetY = 960;
+  const planetR = 330;
 
-  x.strokeStyle = "#C08B2F"; x.lineWidth = 2;
-  x.beginPath(); x.moveTo(100, 178); x.lineTo(980, 178); x.stroke();
+  // Planet ambient glow
+  const pg = x.createRadialGradient(540, planetY, planetR * 0.6, 540, planetY, planetR * 2.4);
+  pg.addColorStop(0, pm.color + "40"); pg.addColorStop(0.5, pm.color + "18"); pg.addColorStop(1, "transparent");
+  x.fillStyle = pg; x.beginPath(); x.arc(540, planetY, planetR * 2.4, 0, Math.PI * 2); x.fill();
 
-  x.fillStyle = "#C08B2F"; x.font = "700 30px 'Syne', sans-serif";
-  x.textAlign = "center"; x.fillText("ROAST-ME", 540, 140);
+  drawPlanetOnCanvas(x, planet, pm.color, 540, planetY, planetR);
 
-  const dn = name.trim() ? name.trim().toUpperCase() : "SOMEONE YOU KNOW";
-  x.fillStyle = "#64748B"; x.font = "500 32px 'Space Grotesk', sans-serif";
-  x.fillText(`GUESS WHO ${dn} ACTUALLY IS?`, 540, 258);
+  /* ── Top section: branding ── */
+  // Decorative gold lines
+  x.strokeStyle = "#C08B2F"; x.lineWidth = 1.5;
+  const drawGoldLine = (y: number) => {
+    const lg = x.createLinearGradient(80, y, 1000, y);
+    lg.addColorStop(0, "transparent"); lg.addColorStop(0.15, "#C08B2F"); lg.addColorStop(0.85, "#C08B2F"); lg.addColorStop(1, "transparent");
+    x.strokeStyle = lg; x.lineWidth = 1.5;
+    x.beginPath(); x.moveTo(80, y); x.lineTo(1000, y); x.stroke();
+  };
+  drawGoldLine(148);
 
-  x.fillStyle = "#E2E8F4"; x.font = "700 60px 'Space Grotesk', sans-serif";
-  const ty = wrapText(x, `"${cosmicTitle}"`, 540, 362, 860, 74);
+  // Brand
+  x.fillStyle = "#C08B2F"; x.font = "800 34px 'Syne', sans-serif";
+  x.textAlign = "center"; x.letterSpacing = "0.12em";
+  x.fillText("ROAST-ME", 540, 118);
 
+  // Planet label pill
   const gentilic = PLANET_GENTILIC[planet] ?? planet;
-  x.fillStyle = pm.color; x.font = "600 36px 'Syne', sans-serif";
-  x.fillText(`${pm.symbol}  You are a ${gentilic} person`, 540, ty + 74);
+  const pillText = `${pm.symbol}  You are a ${gentilic} person`;
+  x.font = "600 30px 'Syne', sans-serif";
+  const pillW = x.measureText(pillText).width + 60;
+  const pillX = 540 - pillW / 2, pillY = 172, pillH = 52;
+  x.fillStyle = pm.color + "22";
+  x.strokeStyle = pm.color + "66"; x.lineWidth = 1.5;
+  roundRect(x, pillX, pillY, pillW, pillH, 26);
+  x.fill(); x.stroke();
+  x.fillStyle = pm.color; x.font = "700 28px 'Syne', sans-serif";
+  x.fillText(pillText, 540, pillY + 34);
 
-  x.strokeStyle = "rgba(192,139,47,0.3)"; x.lineWidth = 1;
-  x.beginPath(); x.moveTo(200, ty + 114); x.lineTo(880, ty + 114); x.stroke();
+  /* ── Name & guess who ── */
+  const dn = name.trim() ? name.trim().toUpperCase() : "SOMEONE YOU KNOW";
+  x.fillStyle = "rgba(150,165,190,0.85)"; x.font = "500 28px 'Space Grotesk', sans-serif";
+  x.fillText(`GUESS WHO ${dn} ACTUALLY IS?`, 540, 260);
 
-  const ry = Math.max(ty + 205, 1240);
-  x.fillStyle = "#E2E8F4"; x.font = "600 48px 'Space Grotesk', sans-serif";
-  const ry2 = wrapText(x, roastTitle, 540, ry, 860, 60);
+  /* ── Cosmic title ── */
+  x.fillStyle = "#E8EEF8";
+  x.font = `700 ${cosmicTitle.length > 24 ? 60 : 68}px 'Space Grotesk', sans-serif`;
+  const titleY = wrapText(x, `"${cosmicTitle}"`, 540, 340, 920, 80);
 
-  x.fillStyle = "#64748B"; x.font = "400 32px 'Inconsolata', monospace";
-  wrapText(x, body, 540, ry2 + 60, 860, 44);
+  // Subtle glow under title
+  const titleGlow = x.createLinearGradient(80, titleY + 24, 1000, titleY + 26);
+  titleGlow.addColorStop(0, "transparent"); titleGlow.addColorStop(0.2, pm.color + "66"); titleGlow.addColorStop(0.8, pm.color + "66"); titleGlow.addColorStop(1, "transparent");
+  x.strokeStyle = titleGlow; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(80, titleY + 28); x.lineTo(1000, titleY + 28); x.stroke();
 
-  x.strokeStyle = "#C08B2F"; x.lineWidth = 2;
-  x.beginPath(); x.moveTo(100, 1748); x.lineTo(980, 1748); x.stroke();
-  x.fillStyle = "#64748B"; x.font = "500 32px 'Space Grotesk', sans-serif";
-  x.fillText("Find your cosmic truth", 540, 1810);
-  x.fillStyle = "#C08B2F"; x.font = "700 42px 'Space Grotesk', sans-serif";
-  x.fillText("roast-me.me", 540, 1868);
+  /* ── Roast card in the lower section ── */
+  const cardTop = Math.max(titleY + 80, 1340);
+  const cardH = 440;
+
+  // Card background
+  const cardG = x.createLinearGradient(60, cardTop, 60, cardTop + cardH);
+  cardG.addColorStop(0, "rgba(12,20,36,0.92)"); cardG.addColorStop(1, "rgba(8,14,28,0.96)");
+  x.fillStyle = cardG;
+  roundRect(x, 60, cardTop, 960, cardH, 20);
+  x.fill();
+
+  // Card border
+  const borderG = x.createLinearGradient(60, cardTop, 1020, cardTop + cardH);
+  borderG.addColorStop(0, pm.color + "55"); borderG.addColorStop(0.5, pm.color + "99"); borderG.addColorStop(1, pm.color + "44");
+  x.strokeStyle = borderG; x.lineWidth = 2;
+  roundRect(x, 60, cardTop, 960, cardH, 20); x.stroke();
+
+  // Gold top stripe on card
+  const stripeG = x.createLinearGradient(60, cardTop, 1020, cardTop);
+  stripeG.addColorStop(0, "transparent"); stripeG.addColorStop(0.1, "#C08B2F"); stripeG.addColorStop(0.9, "#DEB86A"); stripeG.addColorStop(1, "transparent");
+  x.fillStyle = stripeG; x.fillRect(60, cardTop, 960, 3);
+
+  // Roast title
+  x.fillStyle = pm.color; x.font = "700 46px 'Space Grotesk', sans-serif";
+  const rt2 = wrapText(x, roastTitle, 540, cardTop + 68, 880, 58);
+
+  // Body text
+  const shortBody = body.length > 200 ? body.slice(0, 197) + "…" : body;
+  x.fillStyle = "rgba(195,210,230,0.88)"; x.font = "400 30px 'Inconsolata', monospace";
+  wrapText(x, shortBody, 540, rt2 + 52, 880, 42);
+
+  /* ── Bottom branding ── */
+  drawGoldLine(1804);
+  x.fillStyle = "rgba(100,116,139,0.9)"; x.font = "500 28px 'Space Grotesk', sans-serif";
+  x.fillText("Find your cosmic truth at", 540, 1852);
+  x.fillStyle = "#C08B2F"; x.font = "800 44px 'Space Grotesk', sans-serif";
+  x.fillText("roast-me.me", 540, 1906);
 
   return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error("toBlob failed")), "image/png"));
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
 }
 
 /* ─── Share text builder ──────────────────────────────────────────────────────── */
@@ -387,6 +679,8 @@ function ProfileModal({ onClose, onSave, initial }: {
   const { C } = useTheme();
   const [name,    setName]    = useState(initial?.name  ?? "");
   const [email,   setEmail]   = useState(initial?.email ?? "");
+  const [password, setPassword] = useState(initial?.password ?? "");
+  const [showPw,  setShowPw]  = useState(false);
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
   const [err,     setErr]     = useState("");
@@ -396,7 +690,7 @@ function ProfileModal({ onClose, onSave, initial }: {
   const save = async () => {
     if (!validate(email)) { setErr("Please enter a valid email address."); return; }
     setSaving(true); setErr("");
-    const profile: UserProfile = { name: name.trim(), email: email.trim() };
+    const profile: UserProfile = { name: name.trim(), email: email.trim(), password: password || undefined };
     try {
       await saveProfileToSupabase(profile);
       localStorage.setItem("rm-profile", JSON.stringify(profile));
@@ -463,6 +757,20 @@ function ProfileModal({ onClose, onSave, initial }: {
             <input type="email" className="rm-input" placeholder="you@example.com"
               value={email} onChange={e => { setEmail(e.target.value); setErr(""); setSaved(false); }} />
           </div>
+          <div>
+            <div style={{ fontSize: 10, letterSpacing: "0.15em", color: C.muted, textTransform: "uppercase", fontWeight: 700, marginBottom: 6, fontFamily: F.ui }}>
+              Password <span style={{ color: C.dim, fontWeight: 400 }}>(optional)</span>
+            </div>
+            <div style={{ position: "relative" }}>
+              <input type={showPw ? "text" : "password"} className="rm-input" placeholder="Set a password"
+                value={password} onChange={e => { setPassword(e.target.value); setSaved(false); }}
+                style={{ paddingRight: 44 }} />
+              <button type="button" onClick={() => setShowPw(v => !v)} style={{
+                position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 14, padding: 2,
+              }}>{showPw ? "🙈" : "👁"}</button>
+            </div>
+          </div>
 
           {err && <p style={{ fontSize: 12, color: "#E8665A", fontFamily: F.ui }}>{err}</p>}
 
@@ -527,61 +835,62 @@ function NavBar({
     <>
       <div style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
-        height: 46, background: C.navBg, backdropFilter: "blur(14px)",
+        height: 62, background: C.navBg, backdropFilter: "blur(14px)",
         borderBottom: `1px solid ${C.border}`,
-        display: "flex", alignItems: "center", padding: "0 1.25rem", gap: 0,
+        display: "flex", alignItems: "center", padding: "0 1.5rem", gap: 0,
       }}>
         {/* Brand */}
         <a href="/" style={{
-          fontFamily: F.ui, fontSize: 13, fontWeight: 800,
-          color: C.gold, letterSpacing: "0.1em", marginRight: 16,
+          fontFamily: F.ui, fontSize: 15, fontWeight: 800,
+          color: C.gold, letterSpacing: "0.1em", marginRight: "auto",
           textDecoration: "none", flexShrink: 0,
         }}>
           ROAST-ME
         </a>
 
-        {/* Desktop links — left side */}
-        <div className="rm-nav-links" style={{ flex: 1, gap: 0, alignItems: "center" }}>
-          <span style={{ color: C.dim, marginRight: 12, fontSize: 12 }}>|</span>
-          <a href={COSMOS_CHAT_URL} style={lk}>Wanna Chat with Cosmos?</a>
-          <span style={{ color: C.dim, margin: "0 10px", fontSize: 12 }}>|</span>
-          <button onClick={onFeedback} style={lk}>Feedback</button>
-          <span style={{ color: C.dim, margin: "0 10px", fontSize: 12 }}>|</span>
-          <a href="/know-the-creator" style={lk}>Know the Creator</a>
-        </div>
+        {/* Desktop links — right-aligned: Wanna Chat | Know Creator | Feedback | My Profile */}
+        <div className="rm-nav-links" style={{ gap: 0, alignItems: "center" }}>
+          <a href={COSMOS_CHAT_URL} style={{ ...lk, fontSize: 12 }}>Wanna Chat with Cosmos?</a>
+          <span style={{ color: C.dim, margin: "0 12px", fontSize: 13 }}>|</span>
+          <a href="/know-the-creator" style={{ ...lk, fontSize: 12 }}>Know the Creator</a>
+          <span style={{ color: C.dim, margin: "0 12px", fontSize: 13 }}>|</span>
+          <button onClick={onFeedback} style={{ ...lk, fontSize: 12 }}>Feedback</button>
+          <span style={{ color: C.dim, margin: "0 12px", fontSize: 13 }}>|</span>
 
-        {/* Right controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-          {/* Theme toggle */}
-          <button onClick={toggleTheme} title={isDark ? "Switch to light" : "Switch to dark"} style={{
-            background: C.goldFaint, border: `1px solid ${C.goldBorder}`,
-            borderRadius: 20, padding: "3px 10px", cursor: "pointer",
-            fontSize: 13, display: "flex", alignItems: "center", gap: 5,
-            transition: "all 0.2s",
-          }}>
-            {isDark ? "☀️" : "🌙"}
-          </button>
-
-          {/* Profile avatar (desktop) */}
+          {/* My Profile — highlighted */}
           <button onClick={onProfile} className="rm-nav-links"
             title="My Profile" style={{
-              background: "none", border: "none", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 6, padding: 0,
+              background: C.goldFaint,
+              border: `1px solid ${C.goldBorder}`,
+              borderRadius: 20,
+              padding: "5px 14px 5px 10px",
+              cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 7,
             }}>
             {Avatar}
-            <span style={{ fontSize: 11, fontWeight: 600, color: C.muted, fontFamily: F.ui }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.goldLight, fontFamily: F.ui, letterSpacing: "0.03em" }}>
               My Profile
             </span>
           </button>
-
-          {/* Hamburger */}
-          <button className="rm-hamburger" onClick={() => setMobileOpen(!mobileOpen)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexDirection: "column", gap: 4 }}>
-            <div style={{ width: 18, height: 2, background: C.muted, borderRadius: 2, transition: "transform 0.15s", transform: mobileOpen ? "rotate(45deg) translate(4px, 4px)" : "none" }} />
-            <div style={{ width: 18, height: 2, background: C.muted, borderRadius: 2, opacity: mobileOpen ? 0 : 1, transition: "opacity 0.15s" }} />
-            <div style={{ width: 18, height: 2, background: C.muted, borderRadius: 2, transition: "transform 0.15s", transform: mobileOpen ? "rotate(-45deg) translate(4px, -4px)" : "none" }} />
-          </button>
         </div>
+
+        {/* Theme toggle */}
+        <button onClick={toggleTheme} title={isDark ? "Switch to light" : "Switch to dark"} style={{
+          background: C.goldFaint, border: `1px solid ${C.goldBorder}`,
+          borderRadius: 20, padding: "4px 11px", cursor: "pointer",
+          fontSize: 14, display: "flex", alignItems: "center", gap: 5,
+          transition: "all 0.2s", marginLeft: 12,
+        }} className="rm-nav-links">
+          {isDark ? "☀️" : "🌙"}
+        </button>
+
+        {/* Hamburger */}
+        <button className="rm-hamburger" onClick={() => setMobileOpen(!mobileOpen)}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexDirection: "column", gap: 4, marginLeft: 12 }}>
+          <div style={{ width: 20, height: 2, background: C.muted, borderRadius: 2, transition: "transform 0.15s", transform: mobileOpen ? "rotate(45deg) translate(4px, 4px)" : "none" }} />
+          <div style={{ width: 20, height: 2, background: C.muted, borderRadius: 2, opacity: mobileOpen ? 0 : 1, transition: "opacity 0.15s" }} />
+          <div style={{ width: 20, height: 2, background: C.muted, borderRadius: 2, transition: "transform 0.15s", transform: mobileOpen ? "rotate(-45deg) translate(4px, -4px)" : "none" }} />
+        </button>
       </div>
 
       {/* Mobile dropdown */}
@@ -1018,7 +1327,7 @@ export default function Home() {
 
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(30,58,140,0.28) 0%, transparent 65%)", pointerEvents: "none" }} />
 
-        <div style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "70px 1.5rem 3rem" }}>
+        <div style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "82px 1.5rem 3rem" }}>
           <div style={{ width: "100%", maxWidth: 700 }}>
             <div style={{ textAlign: "center", marginBottom: "2.25rem" }}>
               <div style={{ fontSize: 10, letterSpacing: "0.3em", color: C.gold, textTransform: "uppercase", fontWeight: 700, marginBottom: "1rem", fontFamily: F.ui }}>
@@ -1028,7 +1337,7 @@ export default function Home() {
                 Welcome to Roast&#8209;me
               </h1>
               <p style={{ fontFamily: F.cinematic, fontSize: "clamp(1rem, 2.8vw, 1.35rem)", color: C.gold, fontStyle: "italic", lineHeight: 1.5, letterSpacing: "0.01em" }}>
-                where the Cosmos roasts you. Personally&nbsp;;)
+                where the Cosmos roasts you. Personally&nbsp;😉
               </p>
             </div>
 
@@ -1104,7 +1413,7 @@ export default function Home() {
 
   if (screen === "loading") return (
     <ThemeCtx.Provider value={themeValue}>
-      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: "default" }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(30,58,140,0.22) 0%, transparent 65%)", pointerEvents: "none" }} />
         <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "2rem", maxWidth: 440, width: "100%" }}>
           <div style={{ position: "relative", width: 68, height: 68, margin: "0 auto 2.5rem" }}>
@@ -1113,7 +1422,7 @@ export default function Home() {
             <div style={{ position: "absolute", inset: 10, borderRadius: "50%", border: "1px solid transparent", borderTopColor: C.goldLight, animation: "rmSpinRev 0.75s linear infinite" }} />
             <div style={{ position: "absolute", inset: 22, borderRadius: "50%", border: `1px solid ${C.goldBorder}` }} />
           </div>
-          <div ref={msgRef} style={{ fontFamily: F.cinematic, fontSize: "clamp(1.2rem, 4vw, 1.6rem)", fontWeight: 500, color: C.text, letterSpacing: "0.005em", lineHeight: 1.4, minHeight: 52, marginBottom: "1rem", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0 5px", fontStyle: "italic" }} />
+          <div ref={msgRef} style={{ fontFamily: F.cinematic, fontSize: "clamp(1.2rem, 4vw, 1.6rem)", fontWeight: 500, color: C.text, letterSpacing: "0.005em", lineHeight: 1.4, minHeight: 52, marginBottom: "1rem", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0 5px", fontStyle: "italic", userSelect: "none", pointerEvents: "none", caretColor: "transparent" }} />
           <div style={{ fontSize: 12, color: C.dim, fontFamily: F.ui, letterSpacing: "0.05em" }}>
             About 15 seconds. The planets are deliberating.
           </div>
@@ -1136,7 +1445,7 @@ export default function Home() {
         <NavBar onFeedback={() => setFeedbackOpen(true)} onProfile={() => setProfileOpen(true)} profile={profile} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
         <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse 80% 40% at 50% -5%, rgba(30,58,140,0.1) 0%, transparent 60%)", pointerEvents: "none", zIndex: 0 }} />
 
-        <div className="rm-result-content" style={{ paddingTop: 46 }}>
+        <div className="rm-result-content" style={{ paddingTop: 62 }}>
           {/* Hero */}
           <div className="rm-hero-section rm-hero">
             <PlanetBg planet={planet} />
@@ -1195,7 +1504,7 @@ export default function Home() {
                   </div>
                   {closer && (
                     <div style={{ paddingLeft: 31, marginBottom: 11, borderTop: `1px solid ${last ? C.goldBorder : C.border}`, paddingTop: 9 }}>
-                      <p style={{ fontFamily: F.cinematic, fontSize: 15, lineHeight: 1.65, color: C.muted, fontStyle: "italic", letterSpacing: "0.01em" }}>{closer}</p>
+                      <p style={{ fontFamily: F.cinematic, fontSize: 15, lineHeight: 1.65, color: isDark ? "#B8C5D6" : C.muted, fontStyle: "italic", letterSpacing: "0.01em" }}>{closer}</p>
                     </div>
                   )}
                   <div style={{ paddingLeft: 31, display: "flex", justifyContent: "flex-end" }}>
