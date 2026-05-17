@@ -586,7 +586,7 @@ function buildShareText(name: string, cosmicTitle: string, planet: string, roast
   const pm = PLANET_META[planet];
   const gentilic = PLANET_GENTILIC[planet] ?? planet;
   const who = name.trim() ? `Guess who ${name.trim()} actually is?` : "Guess who this person actually is?";
-  return [`👁 ${who}`, "", `"${cosmicTitle}"`, `${pm?.symbol ?? "★"} You are a ${gentilic} person`, "", `— ${roastTitle} —`, body, "", closer, "", "Find your cosmic truth ↓", "roast-me.me"].join("\n");
+  return [`👁 ${who}`, "", `"${cosmicTitle}"`, `${pm?.symbol ?? "★"} ${name.trim()} is a ${gentilic} person`, "", `— ${roastTitle} —`, body, "", closer, "", "Find your cosmic truth ↓", "roast-me.me"].join("\n");
 }
 
 /* ─── Stream parser ───────────────────────────────────────────────────────────── */
