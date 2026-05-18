@@ -157,6 +157,34 @@ def format_dasha_block(sequence: list[dict], query_date: datetime) -> str:
     return "\n".join(lines)
 
 
+def format_dasha_block_roast(sequence: list[dict], query_date: datetime) -> str:
+    """
+    Lean dasha block for the roast prompt — current period + next two transitions only.
+    Drops the full 9-period historical sequence (~50 tokens saved vs format_dasha_block).
+    """
+    cur   = get_current_dasha(sequence, query_date)
+    lines = ["CURRENT DASHA"]
+
+    if cur["mahadasha"]:
+        lines.append(
+            f"Mahadasha: {cur['mahadasha']} "
+            f"({cur['md_start'].strftime('%b %Y')} – {cur['md_end'].strftime('%b %Y')})"
+        )
+    if cur["antardasha"]:
+        lines.append(
+            f"Antardasha: {cur['antardasha']} "
+            f"({cur['ad_start'].strftime('%b %Y')} – {cur['ad_end'].strftime('%b %Y')})"
+        )
+
+    if cur["upcoming"]:
+        lines.append("Next: " + ", ".join(
+            f"{u['lord']} from {u['start'].strftime('%Y')}"
+            for u in cur["upcoming"]
+        ))
+
+    return "\n".join(lines)
+
+
 # ─── House-lord map ───────────────────────────────────────────────────────────
 
 # Traditional (Parashari) sign lords — used for yoga detection
@@ -477,6 +505,22 @@ def format_yoga_block(yogas: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def format_yoga_block_roast(yogas: list[dict]) -> str:
+    """
+    Lean yoga block for the roast prompt — names + quality only, no descriptions.
+    Claude already knows what each yoga means; the description text is redundant
+    in a comedy context and costs ~350 tokens per call.
+    """
+    if not yogas:
+        return "YOGAS: none"
+
+    QUALITY_LABEL = {"benefic": "+", "mixed": "~", "challenging": "-"}
+    lines = ["YOGAS (name [+benefic / ~mixed / -challenging]):"]
+    for y in yogas:
+        lines.append(f"  {QUALITY_LABEL.get(y['quality'], '?')} {y['name']}")
+    return "\n".join(lines)
+
+
 # ─── System Prompt Template ───────────────────────────────────────────────────
 
 SYSTEM_PROMPT_TEMPLATE = """\
@@ -572,86 +616,52 @@ if __name__ == "__main__":
 # ─── Roast-Me.me — Roast Prompt ──────────────────────────────────────────────
 
 INTENSITY_NOTES: dict[str, str] = {
-    "Gentle":   (
-        "Warm and gently ridiculous. Poke fun like a best friend who has seen too much. "
-        "The jokes land soft but they DO land. No comfort food energy — more like 'I say this with love "
-        "and also you are a lot.' Think: a group chat roast where everyone still likes each other at the end."
-    ),
-    "Chaotic":  (
-        "Sharp, specific, and gleefully mean in a fun way. The kind of roast where they laugh, "
-        "then go quiet for a second, then laugh again. "
-        "Scenarios should be so weirdly on-point they feel slightly stalked. "
-        "Think: a comedian who did their homework and has OPINIONS."
-    ),
-    "Unhinged": (
-        "Full dark comedy. Zero mercy, maximum accuracy. Treat their life like a true crime documentary "
-        "where the only victim is their own decision-making. "
-        "Every pattern should feel like a confession they never made out loud. "
-        "The roast should sting just enough that they screenshot it and send it to three people. "
-        "Think: the universe hired a stand-up comedian to read their file aloud at their own funeral."
-    ),
+    # ~40 tokens each — enough to set the tone, nothing more
+    "Gentle":   "Warm and gently ridiculous. Poke fun like a best friend. Jokes land soft but they DO land. Group-chat roast energy.",
+    "Chaotic":  "Sharp and gleefully mean in a fun way. Scenarios so on-point they feel slightly stalked. A comedian who did their homework.",
+    "Unhinged": "Full dark comedy. Zero mercy, maximum accuracy. Every pattern feels like a confession they never made out loud. Sting, don't wound.",
 }
 
-ROAST_SYSTEM_TEMPLATE = """\
-You are a cosmic comedian and astrology translator. 
-I will give you my Vedic birth chart details.
+ROAST_SYSTEM_TEMPLATE = """You are a cosmic comedian and astrology translator.
+Your job is NOT to give a reading. Your job is to roast this person's life using their chart as evidence.
 
-Your job is NOT to give me a reading.
-Your job is to roast my life using my chart as evidence.
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-BIRTH CHART DATA  (your source material \u2014 invisible to the reader)
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+--- BIRTH CHART DATA (source material — invisible to the reader) ---
 {chart_block}
 
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+--- DASHA (current life period) ---
 {dasha_block}
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
+--- YOGAS ---
 {yoga_block}
 
 RULES:
-- Zero astrology jargon. No planet names, no house numbers, 
-  no nakshatra names. Nothing technical.
-- Translate every placement into a HUMAN BEHAVIOUR or LIFE PATTERN
-- Make all funny things of this chart, just humorous jokes, irony, self-aware jokes. 
-  The roast should sting just a little \u2014 not wound, just sting.
-- Each point should feel like you're describing someone's
-  unhinged personality at a dinner party where everyone already knows
-- No filler, no fluff, no motivation
-- End with one grand ironic summary of their entire existence
+- Zero astrology jargon. No planet names, house numbers, or nakshatra names.
+- Translate every placement into a specific HUMAN BEHAVIOUR or LIFE PATTERN.
+- Set each joke in a concrete scene: "you at 2am", "you in a group chat", "you explaining yourself to your therapist".
+- No filler, no motivation, no fortune-cookie wisdom.
+- The last pattern must callback to the first one and land it.
 
-LANGUAGE RULES (these matter a lot):
-- Write like a smart, funny person texting \u2014 not like a thesaurus
-- Banned words and phrases: inexplicably, luminous, profound, paradox, 
-  simultaneously, intrinsically, essentially, ultimately, magnitude,
-  "the universe conspires", "cosmic blueprint", "latent", "embody"
-- Instead of fancy: use punchy. Instead of poetic: use specific.
-- Good example: "You google yourself when you're sad"
-- Bad example: "Your ego inexplicably magnetises public scrutiny"
-- One-liner closers should land like a punchline, not a fortune cookie
+LANGUAGE:
+- Write like a smart funny person texting — not a thesaurus.
+- Banned: inexplicably, luminous, profound, paradox, simultaneously, intrinsically, essentially, ultimately, "the universe conspires", "cosmic blueprint", "latent", "embody".
+- Good: "You google yourself when you're sad." Bad: "Your ego inexplicably magnetises public scrutiny."
 
-HUMOUR STYLE:
-- Dark but not cruel. Honest but not mean-spirited.
-- Callbacks work well \u2014 if you set something up early, land it at the end
-- The best roast lines are the ones they immediately read to someone else
-
-OUTPUT FORMAT \u2014 return ONLY valid JSON, no markdown, no extra text:
+OUTPUT FORMAT — return ONLY valid JSON, no markdown, no extra text:
 {{
-  "cosmic_title": "A short punchy title (4-7 words) summarising their entire cosmic joke",
+  "cosmic_title": "A punchy title (4-7 words) that is itself a roast",
   "patterns": [
     {{
-      "title": "emoji + short title (e.g. \U0001f300 The Commitment Ghost)",
-      "body": "3-4 sentences of the roast point — STRICT LIMIT: body + closer combined must be under 70 words total.",
-      "closer": "one final punchy kicker sentence for this point"
+      "title": "emoji + short title (e.g. 🌀 The Commitment Ghost)",
+      "body": "2-3 sentences. STRICT: body + closer under 70 words combined.",
+      "closer": "one punchy kicker line"
     }}
   ]
 }}
-- should have 8-10 funny jokes
-- The last pattern ties everything together as the grand cosmic joke
-- COUNT YOUR WORDS. body + closer = under 70 words. No exceptions. Tighter is funnier.
+- 8-10 patterns. Last one is the grand callback.
+- COUNT YOUR WORDS. Under 70 per pattern. Tighter is funnier.
 
 INTENSITY: {intensity_note}
-\nOUTPUT LANGUAGE: {language_note}\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+OUTPUT LANGUAGE: {language_note}
 """
 
 
@@ -681,14 +691,18 @@ def build_roast_system_prompt(
     if query_date is None:
         query_date = datetime.utcnow()
 
-    from vedic_calc import format_for_prompt
+    from vedic_calc import format_for_prompt, format_d1_only
 
-    chart_block   = format_for_prompt(chart)
+    # Roast only needs D1 — personality is in the birth chart, not divisional charts.
+    # format_d1_only saves ~100 tokens vs full format_for_prompt (which includes D9/D10).
+    chart_block   = format_d1_only(chart)
     moon_full_lon = chart["d1"]["Moon"]["sign_idx"] * 30 + chart["d1"]["Moon"]["degrees"]
     sequence      = calculate_vimshottari(moon_full_lon, birth_dt)
-    dasha_block   = format_dasha_block(sequence, query_date)
+    # Use lean dasha (current + next two only — no full historical sequence)
+    dasha_block   = format_dasha_block_roast(sequence, query_date)
     yogas         = detect_yogas(chart)
-    yoga_block    = format_yoga_block(yogas)
+    # Use lean yoga block (names + quality only — no descriptions Claude already knows)
+    yoga_block    = format_yoga_block_roast(yogas)
     intensity_note = INTENSITY_NOTES.get(intensity, INTENSITY_NOTES["Unhinged"])
     language_note = (
         f"Write the ENTIRE response in {language}. "
