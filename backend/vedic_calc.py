@@ -543,6 +543,43 @@ def format_for_prompt(chart: dict) -> str:
     return "\n".join(lines)
 
 
+def format_d1_only(chart: dict) -> str:
+    """
+    Render only the Core Trinity + D1 placements — no D9/D10.
+    Used by the roast prompt to save ~100 tokens per call.
+    Divisional charts are irrelevant to personality-based comedy.
+    """
+    ct = chart["core_trinity"]
+    d1 = chart["d1"]
+
+    lines = []
+
+    # ── Core Trinity ──────────────────────────────────────────────────────
+    lines.append("THE CORE TRINITY")
+    asc  = ct["ascendant"]
+    moon = ct["moon"]
+    sun  = ct["sun"]
+    lines.append(f"Ascendant: {asc['sign']} {asc['degrees']:.1f}° | {asc['nakshatra']} P{asc['pada']}")
+    lines.append(f"Sun:  {sun['sign']} H{sun['house']} | {sun['nakshatra']} P{sun['pada']}")
+    lines.append(f"Moon: {moon['sign']} H{moon['house']} | {moon['nakshatra']} P{moon['pada']} (lord: {moon['nak_lord']})")
+
+    lines.append("---")
+
+    # ── D1 ────────────────────────────────────────────────────────────────
+    lines.append("D1 PLACEMENTS")
+    header = f"  {'Planet':<9} {'Sign':<14} {'H':>2} {'Deg':>6} {'Nakshatra':<18} {'Flags'}"
+    lines.append(header)
+
+    for name in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]:
+        p = d1[name]
+        flags = _flags(p)
+        lines.append(
+            f"  {name:<9} {p['sign']:<14} {p['house']:>2} "
+            f"{p['degrees']:>5.1f}° {p['nakshatra'] + ' P' + str(p['pada']):<18} {flags}"
+        )
+
+    return "\n".join(lines)
+
 # ─── FastAPI route example ────────────────────────────────────────────────────
 # In your main.py:
 #
