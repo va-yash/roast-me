@@ -722,11 +722,13 @@ def build_roast_system_prompt(
     if query_date is None:
         query_date = datetime.utcnow()
 
-    from vedic_calc import format_for_prompt, format_d1_only
-
-    # Roast only needs D1 — personality is in the birth chart, not divisional charts.
-    # format_d1_only saves ~100 tokens vs full format_for_prompt (which includes D9/D10).
-    chart_block   = format_d1_only(chart)
+    from vedic_calc import format_for_prompt
+    try:
+        from vedic_calc import format_d1_only
+        chart_block = format_d1_only(chart)
+    except ImportError:
+        # vedic_calc.py not yet updated — fall back to full chart block
+        chart_block = format_for_prompt(chart)
     moon_full_lon = chart["d1"]["Moon"]["sign_idx"] * 30 + chart["d1"]["Moon"]["degrees"]
     sequence      = calculate_vimshottari(moon_full_lon, birth_dt)
     # Use lean dasha (current + next two only — no full historical sequence)
