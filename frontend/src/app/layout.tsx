@@ -3,7 +3,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
-  title: "Roast-Me — Cosmic Damage Reports",
+  title: "Roast-Me | Cosmic Damage Reports",
   description: "Enter your birth details. Receive a personalised Vedic roast. Share it with enemies.",
   metadataBase: new URL("https://roast-me.me"),
   openGraph: {
