@@ -37,7 +37,7 @@ ANTHROPIC_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 OPENCAGE_KEY   = os.getenv("OPENCAGE_API_KEY", "")
 ALLOWED_ORIGIN = os.getenv("ALLOWED_ORIGIN", "*")
 CLAUDE_MODEL   = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
-MAX_TOKENS     = int(os.getenv("MAX_TOKENS", "3000"))
+MAX_TOKENS     = int(os.getenv("MAX_TOKENS", "1000"))
 
 # ── In-memory session store ───────────────────────────────────────────────────
 # { session_id: { system_prompt, chart, birth_utc, birth_data } }
@@ -111,7 +111,7 @@ def local_to_utc(dob: str, tob: str, timezone_str: str) -> datetime:
     return utc_dt.replace(tzinfo=None)
 
 
-async def _stream_claude(system_prompt: str, messages: list[dict]) -> AsyncGenerator[str, None]:
+async def _stream_claude(system_prompt: str, messages: list[dict], max_tokens: int = None) -> AsyncGenerator[str, None]:
     """Shared SSE streaming logic for all Claude calls."""
     if not ANTHROPIC_KEY:
         yield f"data: {json.dumps({'error': 'ANTHROPIC_API_KEY not configured'})}\n\n"
@@ -124,7 +124,7 @@ async def _stream_claude(system_prompt: str, messages: list[dict]) -> AsyncGener
     }
     payload = {
         "model":      CLAUDE_MODEL,
-        "max_tokens": MAX_TOKENS,
+        "max_tokens": max_tokens or MAX_TOKENS,
         "system":     system_prompt,
         "messages":   messages,
         "stream":     True,
@@ -284,7 +284,8 @@ async def get_roast(req: RoastInput):
     messages = [{"role": "user", "content": "Generate the cosmic mirror reading now. Output only JSON."}]
 
     return StreamingResponse(
-        _stream_claude(roast_system, messages),
+        # Roast is structured JSON with 8-10 jokes × 70 words — 1000 tokens is plenty.
+        _stream_claude(roast_system, messages, max_tokens=1000),
         media_type="text/event-stream",
         headers=SSE_HEADERS,
     )
@@ -308,7 +309,8 @@ async def ask_question(req: AskInput):
     messages.append({"role": "user", "content": req.question})
 
     return StreamingResponse(
-        _stream_claude(session["system_prompt"], messages),
+        # Q&A answers need more headroom than the roast's structured JSON output.
+        _stream_claude(session["system_prompt"], messages, max_tokens=2000),
         media_type="text/event-stream",
         headers=SSE_HEADERS,
     )
