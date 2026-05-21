@@ -19,7 +19,6 @@ interface ChartSummary {
 interface UserProfile { name: string; email: string; password?: string; }
 
 type Screen    = "intro" | "input" | "loading" | "result";
-type Intensity = "Gentle" | "Chaotic" | "Unhinged";
 type Platform  = "instagram" | "snapchat" | "whatsapp" | "facebook" | "twitter" | "copy";
 
 /* ─── Theme ──────────────────────────────────────────────────────────────────── */
@@ -1127,7 +1126,6 @@ export default function Home() {
   const [dob,        setDob]        = useState("");
   const [tob,        setTob]        = useState("");
   const [pob,        setPob]        = useState("");
-  const [intensity,  setIntensity]  = useState<Intensity>("Unhinged");
   const [error,      setError]      = useState("");
   const [msgIdx,     setMsgIdx]     = useState(0);
   const [roastData,  setRoastData]  = useState<RoastData | null>(null);
@@ -1343,7 +1341,7 @@ export default function Home() {
 
       const rr = await fetch(`${API_URL}/api/roast`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: cd.session_id, intensity, language }),
+        body: JSON.stringify({ session_id: cd.session_id, language }),
       });
       if (!rr.ok || !rr.body) throw new Error("Stream failed to start");
 
@@ -1370,7 +1368,7 @@ export default function Home() {
       setError(e instanceof Error ? e.message : "Stars unavailable. Try again.");
       setScreen("input");
     }
-  }, [dob, tob, pob, intensity, name, language]);
+  }, [dob, tob, pob, name, language]);
 
   const restart = useCallback(() => {
     setScreen("input"); setRoastData(null); setChart(null); setError("");
@@ -1453,20 +1451,6 @@ export default function Home() {
                 </div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                <div style={{ flex: "1 1 200px" }}>
-                  <Label>Roast intensity</Label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
-                    {(["Gentle", "Chaotic", "Unhinged"] as Intensity[]).map(lvl => (
-                      <button key={lvl} className="rm-btn" onClick={() => setIntensity(lvl)} style={{
-                        padding: "10px 0", borderRadius: 6, fontSize: 13, fontFamily: F.ui,
-                        border: `1px solid ${intensity === lvl ? C.gold : C.dim}`,
-                        background: intensity === lvl ? C.goldFaint : "transparent",
-                        color: intensity === lvl ? C.goldLight : C.muted,
-                        fontWeight: intensity === lvl ? 700 : 400, letterSpacing: "0.02em",
-                      }}>{lvl}</button>
-                    ))}
-                  </div>
-                </div>
                 <div style={{ flex: "1 1 200px" }}>
                   <Label>Output language</Label>
                   <select className="rm-input" value={language} onChange={e => setLanguage(e.target.value)} style={{ cursor: "pointer", height: 46 }}>
@@ -1555,7 +1539,7 @@ export default function Home() {
                 </span>
               </div>
               <div style={{ display: "flex", gap: 7, justifyContent: "center", flexWrap: "wrap", marginBottom: "1.5rem" }}>
-                {[pob || chart?.location, `${intensity} mode`].filter(Boolean).map(t => (
+                {[pob || chart?.location].filter(Boolean).map(t => (
                   <span key={t} style={{ fontSize: 11, padding: "3px 12px", borderRadius: 20, border: `1px solid ${C.border}`, color: C.muted, fontFamily: F.ui }}>{t}</span>
                 ))}
               </div>
