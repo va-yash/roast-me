@@ -545,11 +545,25 @@ RULES:
   motivational poster energy
 - End with one grand ironic summary of their entire existence
 
-FORMAT: 
+FORMAT:
 - 8 to 10 points
 - Each point has an emoji title
 - Short punchy paragraphs
 - Last point ties everything together as the cosmic joke
+
+OUTPUT FORMAT — return ONLY valid JSON, no markdown, no extra text:
+{{
+  "cosmic_title": "A short punchy title (4-7 words) summarising their entire cosmic joke",
+  "patterns": [
+    {{
+      "title": "emoji + short title (e.g. \U0001f300 The Commitment Ghost)",
+      "body": "2-3 sentences of the roast point",
+      "closer": "one final punchy kicker sentence for this point"
+    }}
+  ]
+}}
+- 8 to 10 patterns total
+- The last pattern ties everything together as the grand cosmic joke
 
 OUTPUT LANGUAGE: {language_note}
 """
