@@ -1,12 +1,12 @@
 """
-prompt_builder.py — Yoga Detection + Vimshottari Dasha + Claude System Prompt Assembly
+prompt_builder.py — Yoga Detection + Vimshottari Dasha + Roast Prompt Assembly
 
 Depends on: vedic_calc.py
 Install:    pip install pyswisseph python-dateutil
 
 Entry point:
-    from prompt_builder import build_system_prompt
-    system_prompt = build_system_prompt(chart, birth_dt, query_date=datetime.utcnow())
+    from prompt_builder import build_roast_system_prompt
+    system_prompt = build_roast_system_prompt(chart, birth_dt, query_date=datetime.utcnow())
 """
 
 from datetime import datetime, timedelta
@@ -521,127 +521,13 @@ def format_yoga_block_roast(yogas: list[dict]) -> str:
     return "\n".join(lines)
 
 
-# ─── System Prompt Template ───────────────────────────────────────────────────
-
-SYSTEM_PROMPT_TEMPLATE = """\
-You are a comedy masterful Vedic astrology with decades of experience \
-in classical Parashari and Jaimini Jyotish. You have been given this person's complete \
-birth chart, divisional charts, dasha timeline, and yoga profile. Every answer you \
-give must be rooted in THEIR specific placements — never generic.
-
-════════════════════════════════════════════════════════
-BIRTH CHART DATA
-════════════════════════════════════════════════════════
-{chart_block}
-
-════════════════════════════════════════════════════════
-{dasha_block}
-════════════════════════════════════════════════════════
-
-{yoga_block}
-
-════════════════════════════════════════════════════════
-HOW TO RESPOND — READ THIS CAREFULLY
-════════════════════════════════════════════════════════
-1. ALWAYS anchor your answer in specific placements from this chart.
-   Reference house numbers, signs, degrees, nakshatras, and dashas.
-
-2. NEVER give a generic reading. If you cannot find the answer in
-   the chart data above, say so honestly.
-"""
-
-
-# ─── Master builder ───────────────────────────────────────────────────────────
-
-def build_system_prompt(chart: dict, birth_dt: datetime, query_date: datetime = None) -> str:
-    """
-    Build the complete Claude system prompt from a calculated chart.
-
-    Parameters
-    ----------
-    chart       : Output of vedic_calc.calculate_chart()
-    birth_dt    : Actual birth datetime in UTC (for dasha timing)
-    query_date  : The date for dasha calculation (default: today)
-
-    Returns
-    -------
-    str — complete system prompt ready to pass to Claude API
-    """
-    if query_date is None:
-        query_date = datetime.utcnow()
-
-    from vedic_calc import format_for_prompt
-
-    # Chart text block
-    chart_block = format_for_prompt(chart)
-
-    # Dasha block
-    moon_lon  = chart["d1"]["Moon"]["sign_idx"] * 30 + chart["d1"]["Moon"]["degrees"]
-    # Reconstruct full Moon longitude from sign + degrees
-    moon_full_lon = chart["d1"]["Moon"]["sign_idx"] * 30 + chart["d1"]["Moon"]["degrees"]
-    sequence     = calculate_vimshottari(moon_full_lon, birth_dt)
-    dasha_block  = format_dasha_block(sequence, query_date)
-
-    # Yoga block
-    yogas      = detect_yogas(chart)
-    yoga_block = format_yoga_block(yogas)
-
-    return SYSTEM_PROMPT_TEMPLATE.format(
-        chart_block=chart_block,
-        dasha_block=dasha_block,
-        yoga_block=yoga_block
-    )
-
-
-# ─── Quick test ───────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    from vedic_calc import calculate_chart
-
-    # Oct 24, 1999 — 18:30 IST = 13:00 UTC — Nagpur (21.15N, 79.09E)
-    birth_utc = datetime(1999, 10, 24, 13, 0, 0)
-    chart = calculate_chart(birth_utc, lat=21.1458, lon=79.0882)
-
-    prompt = build_system_prompt(
-        chart,
-        birth_dt=birth_utc,
-        query_date=datetime(2026, 4, 1)
-    )
-
-    print(prompt[:6000])  # first 6000 chars
-    print("\n... [truncated for display] ...\n")
-    print(f"\nTotal system prompt length: {len(prompt)} characters / ~{len(prompt)//4} tokens")
-
-
 # ─── Roast-Me.me — Roast Prompt ──────────────────────────────────────────────
 
-INTENSITY_NOTES: dict[str, str] = {
-    "Gentle":   (
-        "Warm and gently ridiculous. Poke fun like a best friend who has seen too much. "
-        "The jokes land soft but they DO land. No comfort food energy — more like 'I say this with love "
-        "and also you are a lot.' Think: a group chat roast where everyone still likes each other at the end."
-    ),
-    "Chaotic":  (
-        "Sharp, specific, and gleefully mean in a fun way. The kind of roast where they laugh, "
-        "then go quiet for a second, then laugh again. "
-        "Scenarios should be so weirdly on-point they feel slightly stalked. "
-        "Think: a comedian who did their homework and has OPINIONS."
-    ),
-    "Unhinged": (
-        "Full dark comedy. Zero mercy, maximum accuracy. Treat their life like a true crime documentary "
-        "where the only victim is their own decision-making. "
-        "Every pattern should feel like a confession they never made out loud. "
-        "The roast should sting just enough that they screenshot it and send it to three people. "
-        "Think: the universe hired a stand-up comedian to read their file aloud at their own funeral."
-    ),
-}
 
 ROAST_SYSTEM_TEMPLATE = """\
 You are a cosmic comedian and astrology translator. 
 I will give you my Vedic birth chart details.
-
-Your job is NOT to give me a reading.
-Your job is to roast my life using my chart as evidence.
+Your job is to roast my life using my chart as evidence - be it insecurities, be it humbling me with facts, be it dark realities - YOU MOCK/ROAST ME ON THOSE.
 
 BIRTH CHART DATA  (your source material — invisible to the reader)
 {chart_block}
@@ -654,44 +540,17 @@ RULES:
 - Zero astrology jargon. No planet names, no house numbers, 
   no nakshatra names. Nothing technical.
 - Translate every placement into a HUMAN BEHAVIOUR or LIFE PATTERN
-- Make all funny things of this chart, just humorous jokes, irony, self-aware jokes. 
-  The roast should sting just a little — not wound, just sting.
-- Each point should feel like you're describing someone's
-  unhinged personality at a dinner party where everyone already knows
-- No filler, no fluff, no motivation
+- Though it is traits/insecurities/facts, make it funny.
+- No filler, no fluff, no "the universe has a plan for you" 
+  motivational poster energy
 - End with one grand ironic summary of their entire existence
 
-LANGUAGE RULES (these matter a lot):
-- Write like a smart, funny person texting — not like a thesaurus
-- Banned words and phrases: inexplicably, luminous, profound, paradox, 
-  simultaneously, intrinsically, essentially, ultimately, magnitude,
-  "the universe conspires", "cosmic blueprint", "latent", "embody"
-- Instead of fancy: use punchy. Instead of poetic: use specific.
-- Good example: "You google yourself when you're sad"
-- Bad example: "Your ego inexplicably magnetises public scrutiny"
-- One-liner closers should land like a punchline, not a fortune cookie
+FORMAT: 
+- 8 to 10 points
+- Each point has an emoji title
+- Short punchy paragraphs
+- Last point ties everything together as the cosmic joke
 
-HUMOUR STYLE:
-- Dark but not cruel. Honest but not mean-spirited.
-- Callbacks work well — if you set something up early, land it at the end
-- The best roast lines are the ones they immediately read to someone else
-
-OUTPUT FORMAT — return ONLY valid JSON, no markdown, no extra text:
-{{
-  "cosmic_title": "A short punchy title (4-7 words) summarising their entire cosmic joke",
-  "patterns": [
-    {{
-      "title": "emoji + short title (e.g. \U0001f300 The Commitment Ghost)",
-      "body": "3-4 sentences of the roast point — STRICT LIMIT: body + closer combined must be under 70 words total.",
-      "closer": "one final punchy kicker sentence for this point"
-    }}
-  ]
-}}
-- should have 8-10 funny jokes
-- The last pattern ties everything together as the grand cosmic joke
-- COUNT YOUR WORDS. body + closer = under 70 words. No exceptions. Tighter is funnier.
-
-INTENSITY: {intensity_note}
 OUTPUT LANGUAGE: {language_note}
 """
 
@@ -700,24 +559,21 @@ def build_roast_system_prompt(
     chart: dict,
     birth_dt: datetime,
     query_date: datetime = None,
-    intensity: str = "Unhinged",
     language:  str = "English",
 ) -> str:
     """
-    Build the cosmic mirror system prompt from a calculated chart.
+    Build the roast system prompt from a calculated chart.
 
     Parameters
     ----------
     chart      : Output of vedic_calc.calculate_chart()
     birth_dt   : Birth datetime in UTC (for dasha timing)
     query_date : Date to evaluate current dashas (default: today)
-    intensity  : "Gentle" | "Chaotic" | "Unhinged"
-                 Controls absurdism level — not cruelty level.
-                 All three are warm. They differ in how unhinged the metaphors get.
+    language   : Output language for the roast (default: "English")
 
     Returns
     -------
-    str — complete system prompt for the cosmic mirror endpoint
+    str — complete system prompt for the roast endpoint
     """
     if query_date is None:
         query_date = datetime.utcnow()
@@ -731,22 +587,17 @@ def build_roast_system_prompt(
         chart_block = format_for_prompt(chart)
     moon_full_lon = chart["d1"]["Moon"]["sign_idx"] * 30 + chart["d1"]["Moon"]["degrees"]
     sequence      = calculate_vimshottari(moon_full_lon, birth_dt)
-    # Use lean dasha (current + next two only — no full historical sequence)
     dasha_block   = format_dasha_block_roast(sequence, query_date)
     yogas         = detect_yogas(chart)
-    # Use lean yoga block (names + quality only — no descriptions Claude already knows)
     yoga_block    = format_yoga_block_roast(yogas)
-    intensity_note = INTENSITY_NOTES.get(intensity, INTENSITY_NOTES["Unhinged"])
     language_note = (
         f"Write the ENTIRE response in {language}. "
-        f"All JSON string values must be in {language}. "
         f"Use the natural script and grammar of {language}."
     ) if language != "English" else "Write the entire response in English."
 
     return ROAST_SYSTEM_TEMPLATE.format(
-        chart_block    = chart_block,
-        dasha_block    = dasha_block,
-        yoga_block     = yoga_block,
-        intensity_note = intensity_note,
-        language_note  = language_note,
+        chart_block   = chart_block,
+        dasha_block   = dasha_block,
+        yoga_block    = yoga_block,
+        language_note = language_note,
     )
