@@ -29,7 +29,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from vedic_calc import calculate_chart, calculate_dominant_planet
-from prompt_builder import build_system_prompt, build_roast_system_prompt
+from prompt_builder import build_roast_system_prompt
 
 load_dotenv()
 
@@ -40,7 +40,7 @@ CLAUDE_MODEL   = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 MAX_TOKENS     = int(os.getenv("MAX_TOKENS", "1000"))
 
 # ── In-memory session store ───────────────────────────────────────────────────
-# { session_id: { system_prompt, chart, birth_utc, birth_data } }
+# { session_id: { chart, birth_utc, birth_data, dominant_planet } }
 # Fine for low traffic. Swap for Redis at 100+ concurrent users.
 SESSIONS: dict[str, dict] = {}
 
@@ -68,14 +68,8 @@ class BirthInput(BaseModel):
 
 class RoastInput(BaseModel):
     session_id: str
-    intensity:  str = "Unhinged"   # "Gentle" | "Chaotic" | "Unhinged"
     language:   str = "English"    # Output language for the roast
 
-
-class AskInput(BaseModel):
-    session_id: str
-    question:   str
-    history:    list[dict] = []
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -214,18 +208,8 @@ async def create_chart(birth: BirthInput):
     except Exception as e:
         dominant_planet = "Saturn"  # safe fallback
 
-    try:
-        system_prompt = build_system_prompt(
-            chart,
-            birth_dt=birth_utc,
-            query_date=datetime.utcnow()
-        )
-    except Exception as e:
-        raise HTTPException(500, f"Prompt build failed: {e}")
-
     session_id = str(uuid.uuid4())
     SESSIONS[session_id] = {
-        "system_prompt":   system_prompt,
         "chart":           chart,
         "birth_utc":       birth_utc,
         "dominant_planet": dominant_planet,
@@ -275,7 +259,6 @@ async def get_roast(req: RoastInput):
             session["chart"],
             birth_dt=session["birth_utc"],
             query_date=datetime.utcnow(),
-            intensity=req.intensity,
             language=req.language,
         )
     except Exception as e:
@@ -284,33 +267,8 @@ async def get_roast(req: RoastInput):
     messages = [{"role": "user", "content": "Generate the cosmic mirror reading now. Output only JSON."}]
 
     return StreamingResponse(
-        # Roast is structured JSON with 8-10 jokes × 70 words — 1000 tokens is plenty.
+        # Roast is structured JSON with 8-10 jokes — 1000 tokens is plenty.
         _stream_claude(roast_system, messages, max_tokens=1000),
-        media_type="text/event-stream",
-        headers=SSE_HEADERS,
-    )
-
-
-@app.post("/api/ask")
-async def ask_question(req: AskInput):
-    """
-    Streaming endpoint for the Jyotishi advisor mode (future feature).
-    Same session, different system prompt.
-    """
-    if req.session_id not in SESSIONS:
-        raise HTTPException(404, "Session not found. Please re-enter birth details.")
-
-    session = SESSIONS[req.session_id]
-    messages = [
-        {"role": m["role"], "content": m["content"]}
-        for m in req.history
-        if m.get("role") in ("user", "assistant") and m.get("content")
-    ]
-    messages.append({"role": "user", "content": req.question})
-
-    return StreamingResponse(
-        # Q&A answers need more headroom than the roast's structured JSON output.
-        _stream_claude(session["system_prompt"], messages, max_tokens=2000),
         media_type="text/event-stream",
         headers=SSE_HEADERS,
     )
