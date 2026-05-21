@@ -591,8 +591,20 @@ function buildShareText(name: string, cosmicTitle: string, planet: string, roast
 /* ─── Stream parser ───────────────────────────────────────────────────────────── */
 
 function parseRoast(raw: string): RoastData | null {
-  const text = raw.replace(/```json|```/g, "").trim();
+  // Step 1: strip markdown code fences
+  let text = raw.replace(/```json|```/g, "").trim();
+
+  // Step 2: extract the outermost { ... } block in case Claude prefixed with text
+  const start = text.indexOf("{");
+  const end   = text.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    text = text.slice(start, end + 1);
+  }
+
+  // Step 3: try clean parse
   try { return JSON.parse(text); } catch { /* fall through */ }
+
+  // Step 4: attempt to close unclosed brackets/quotes
   let fixed = text;
   if ((fixed.match(/(?<!\\)"/g) ?? []).length % 2 !== 0) fixed += '"';
   const stack: string[] = [];
@@ -1348,6 +1360,7 @@ export default function Home() {
       const reader = rr.body.getReader();
       const dec    = new TextDecoder();
       let full     = "";
+      let streamError = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -1357,13 +1370,28 @@ export default function Home() {
           if (!line.startsWith("data: ")) continue;
           try {
             const p = JSON.parse(line.slice(6));
-            if (p.error) throw new Error(p.error);
+            if (p.error) { streamError = p.error; break; }
             if (p.text) full += p.text;
-            if (p.done) { const d = parseRoast(full); if (d) { setRoastData(d); setScreen("result"); } }
-          } catch { /* partial chunk */ }
+            if (p.done) {
+              const d = parseRoast(full);
+              if (d) { setRoastData(d); setScreen("result"); return; }
+            }
+          } catch { /* partial SSE chunk — keep accumulating */ }
         }
+        if (streamError) break;
       }
-      if (full) { const d = parseRoast(full); if (d) { setRoastData(d); setScreen("result"); } }
+
+      if (streamError) throw new Error(streamError);
+
+      // Stream closed — attempt final parse
+      if (full) {
+        const d = parseRoast(full);
+        if (d) { setRoastData(d); setScreen("result"); return; }
+        // Claude returned something but it wasn't valid JSON
+        throw new Error("Got a response but couldn't read it. Try again.");
+      }
+
+      throw new Error("No response received. Try again.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Stars unavailable. Try again.");
       setScreen("input");
