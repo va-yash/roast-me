@@ -234,6 +234,19 @@ def calculate_chart(
     asc_sign_idx, asc_sign_name, asc_deg = get_sign_and_degree(asc_sidereal)
     asc_nak, asc_pada, asc_nak_lord = get_nakshatra_info(asc_sidereal)
 
+    # ── 2026-08 · A DIVISIONAL HOUSE IS COUNTED FROM ITS OWN ASCENDANT ──────
+    # d9_house and d10_house were both computed as
+    # whole_sign_house(divisional_sign, asc_sign_idx) — the D1 ascendant. That
+    # is only correct when the navamsa/dasamsa lagna happens to land in the
+    # same sign as the rasi lagna, i.e. by coincidence.
+    #
+    # It survived because the roast prompt calls format_d1_only() and never
+    # prints D9 or D10, so nothing downstream read the wrong number. It is
+    # fixed here rather than deleted because the richer roast blocks below
+    # (and anything that later reuses this engine) do read them.
+    d9_asc_idx,  _ = navamsa_sign(asc_sidereal)
+    d10_asc_idx, _ = dasamsa_sign(asc_sidereal)
+
     # ── Collect raw planet data ────────────────────────────────────────────
     raw = {}
     sun_lon = None
@@ -282,16 +295,16 @@ def calculate_chart(
         # Exalted
         exalted = EXALTATION_SIGN.get(name) == sign_idx
 
-        # Navamsa
+        # Navamsa — house counted from the NAVAMSA ascendant (see note above)
         d9_sign_idx, d9_sign_name = navamsa_sign(lon_val)
-        d9_house = whole_sign_house(d9_sign_idx, asc_sign_idx)
+        d9_house = whole_sign_house(d9_sign_idx, d9_asc_idx)
 
         # Vargottam
         vargottam = is_vargottam(sign_idx, d9_sign_idx)
 
-        # Dasamsa
+        # Dasamsa — house counted from the DASAMSA ascendant
         d10_sign_idx, d10_sign_name = dasamsa_sign(lon_val)
-        d10_house = whole_sign_house(d10_sign_idx, asc_sign_idx)
+        d10_house = whole_sign_house(d10_sign_idx, d10_asc_idx)
 
         d1[name] = {
             "sign":        sign_name,
@@ -357,7 +370,107 @@ def calculate_chart(
         "d1":           d1,
         "d9":           d9,
         "d10":          d10,
+        "d1_asc":       asc_sign_idx,
+        "d9_asc":       d9_asc_idx,
+        "d10_asc":      d10_asc_idx,
     }
+
+
+# ─── Transits, Sade Sati and Jaimini karakas ─────────────────────────────────
+#
+# 2026-08 · WHY THESE WERE ADDED
+# The roast prompt was handed a natal snapshot and nothing about NOW. Every
+# roast it produced was therefore about a permanent disposition, which reads as
+# a horoscope however sharp the writing is. The funniest and most recognisable
+# material in a Vedic chart is the part that is true *this month* — Saturn
+# grinding over the natal Moon, a node parked on the tenth house — and none of
+# it was being calculated.
+#
+# Jaimini karakas are here for a different reason: the Atmakaraka is the single
+# highest-signal planet in a chart for personality work, it costs one sort to
+# compute, and it was being thrown away inside calculate_dominant_planet().
+
+
+def calculate_transits(dt_utc: datetime) -> dict:
+    """Where the planets are RIGHT NOW (sidereal). Keyed like d1."""
+    swe.set_sid_mode(swe.SIDM_LAHIRI)
+    jd = to_jd(dt_utc)
+    out: dict[str, dict] = {}
+    for name, pid in PLANET_IDS.items():
+        lon, speed = sidereal_longitude(jd, pid)
+        lon %= 360
+        sign_idx, sign_name, deg = get_sign_and_degree(lon)
+        nak, pada, _ = get_nakshatra_info(lon)
+        out[name] = {"sign": sign_name, "sign_idx": sign_idx,
+                     "degrees": round(deg, 1), "nakshatra": nak, "pada": pada,
+                     "retrograde": speed < 0}
+    r = out["Rahu"]
+    klon = (r["sign_idx"] * 30 + r["degrees"] + 180) % 360
+    ksi, ksn, kdeg = get_sign_and_degree(klon)
+    out["Ketu"] = {"sign": ksn, "sign_idx": ksi, "degrees": round(kdeg, 1),
+                   "nakshatra": get_nakshatra_info(klon)[0],
+                   "pada": get_nakshatra_info(klon)[1], "retrograde": True}
+    return out
+
+
+# Saturn's position relative to the natal Moon sign, as a plain-language label.
+# 12th / 1st / 2nd from the Moon is the seven-and-a-half-year Sade Sati; 4th and
+# 8th are the two-and-a-half-year Dhaiya ("small panoti"). Indians know these by
+# name and being told you are in one is instantly recognisable.
+_SATURN_PHASE = {
+    11: ("Sade Sati", "rising phase",
+         "the grind has started but has not peaked; things feel heavier than "
+         "they look from outside"),
+    0:  ("Sade Sati", "peak phase",
+         "the heaviest stretch — this is the one people remember years later"),
+    1:  ("Sade Sati", "setting phase",
+         "the worst is behind but the bill for it is still being paid"),
+    3:  ("Dhaiya", "small panoti",
+         "pressure on home, family and peace of mind"),
+    6:  ("Dhaiya", "small panoti",
+         "pressure on work, health and daily obligations"),
+}
+
+
+def saturn_pressure(natal_moon_sign_idx: int, transit_saturn_sign_idx: int) -> dict:
+    """Sade Sati / Dhaiya status. Returns {} when neither is running."""
+    offset = (transit_saturn_sign_idx - natal_moon_sign_idx) % 12
+    hit = _SATURN_PHASE.get(offset)
+    if not hit:
+        return {}
+    name, phase, meaning = hit
+    return {"name": name, "phase": phase, "meaning": meaning, "offset": offset}
+
+
+# Jaimini's chara karakas: rank the seven classical planets by how far they have
+# travelled into their sign. Highest degree = Atmakaraka, the soul's headline
+# obsession. This is the seven-karaka scheme (Rahu excluded).
+_KARAKA_LABELS = [
+    ("Atmakaraka",   "the self — the one thing this person cannot stop being about"),
+    ("Amatyakaraka", "career and the people who advance it"),
+    ("Bhratrikaraka", "siblings, courage, the risks they will and won't take"),
+    ("Matrikaraka",  "mother, home, what comfort means to them"),
+    ("Pitrikaraka",  "father, authority, the rules they inherited"),
+    ("Putrakaraka",  "children, creativity, what they make"),
+    ("Gnatikaraka",  "obstacles, rivals, the recurring fight"),
+]
+
+
+def jaimini_karakas(chart: dict) -> list[dict]:
+    """Seven chara karakas, strongest first. Never raises."""
+    try:
+        d1 = chart["d1"]
+        classical = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+        ranked = sorted(classical, key=lambda p: -d1[p]["degrees"])
+        return [
+            {"karaka": _KARAKA_LABELS[i][0], "planet": p,
+             "means": _KARAKA_LABELS[i][1],
+             "sign": d1[p]["sign"], "house": d1[p]["house"],
+             "degrees": d1[p]["degrees"]}
+            for i, p in enumerate(ranked)
+        ]
+    except Exception:
+        return []
 
 
 # ─── Dominant Planet Calculation ─────────────────────────────────────────────
