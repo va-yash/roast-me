@@ -194,13 +194,13 @@ def format_dasha_block_roast(sequence: list[dict], query_date: datetime,
         yrs_left = (cur["md_end"] - query_date).days / 365.25
         lines.append(
             f"Mahadasha: {cur['mahadasha']} "
-            f"({cur['md_start'].strftime('%b %Y')} – {cur['md_end'].strftime('%b %Y')}) "
-            f"— {yrs_in:.1f} yrs in, {yrs_left:.1f} yrs left"
+            f"({cur['md_start'].strftime('%b %Y')} to {cur['md_end'].strftime('%b %Y')}), "
+            f"{yrs_in:.1f} yrs in, {yrs_left:.1f} yrs left"
         )
     if cur["antardasha"]:
         lines.append(
             f"Antardasha: {cur['antardasha']} "
-            f"({cur['ad_start'].strftime('%b %Y')} – {cur['ad_end'].strftime('%b %Y')})"
+            f"({cur['ad_start'].strftime('%b %Y')} to {cur['ad_end'].strftime('%b %Y')})"
         )
 
     if cur["upcoming"]:
@@ -280,7 +280,7 @@ CONJUNCTION_NAMES = {
     frozenset(["Saturn", "Rahu"]):   ("Shrapit",
         "delay stacked on obsession; the thing wanted most arrives latest"),
     frozenset(["Moon", "Saturn"]):   ("Punarphoo",
-        "emotional cold storage — feels it fully, shows it never"),
+        "emotional cold storage, feels it fully and shows it never"),
     frozenset(["Sun", "Mercury"]):   ("Budhaditya",
         "clever and knows it; identity fused to being the smart one"),
     frozenset(["Moon", "Mars"]):     ("Chandra-Mangala",
@@ -346,7 +346,7 @@ def detect_yogas(chart: dict) -> list[dict]:
     if mutual_kendra and jup_h in KENDRA:
         yogas.append({
             "name": "Gaja Kesari Yoga",
-            "description": "Jupiter in a kendra from Moon — grants wisdom, renown, and moral authority.",
+            "description": "Jupiter in a kendra from Moon. Grants wisdom, renown and moral authority.",
             "planets": ["Moon", "Jupiter"],
             "quality": "benefic"
         })
@@ -388,7 +388,7 @@ def detect_yogas(chart: dict) -> list[dict]:
 
         if cancellation:
             yogas.append({
-                "name": f"Neecha Bhanga Raja Yoga — {planet}",
+                "name": f"Neecha Bhanga Raja Yoga: {planet}",
                 "description": (
                     f"{planet} is debilitated in {SIGNS[debil_sign_idx]} but its fall is cancelled: {reason}. "
                     "This converts weakness into latent royal power, activated through adversity."
@@ -406,7 +406,7 @@ def detect_yogas(chart: dict) -> list[dict]:
                 "description": (
                     f"{planet} sits fallen in {SIGNS[debil_sign_idx]} (H{h(planet)}) "
                     f"with nothing rescuing it"
-                    + (" — and retrograde, so it is worked at inwardly and never resolved."
+                    + (". Retrograde too, so it is worked at inwardly and never resolved."
                        if is_retro(planet) else ".")
                 ),
                 "planets": [planet],
@@ -434,10 +434,10 @@ def detect_yogas(chart: dict) -> list[dict]:
                 _vry_pairs_seen.add(key)
                 _vry_exchange_pairs.add(key)
                 yogas.append({
-                    "name": f"Viparita Raja Yoga — H{trik_house}/H{lord_house} exchange",
+                    "name": f"Viparita Raja Yoga: H{trik_house}/H{lord_house} exchange",
                     "description": (
                         f"The lords of H{trik_house} and H{lord_house} ({lord_of_trik} and "
-                        f"{other_lord}) have swapped houses — the two hardest areas of the "
+                        f"{other_lord}) have swapped houses. The two hardest areas of the "
                         "chart feed each other, and setbacks in one become leverage in the other."
                     ),
                     "planets": [lord_of_trik, other_lord],
@@ -448,7 +448,7 @@ def detect_yogas(chart: dict) -> list[dict]:
                     "name": f"Viparita Raja Yoga ({trik_house}th lord in {lord_house}th)",
                     "description": (
                         f"Lord of H{trik_house} ({lord_of_trik}) placed in H{lord_house} "
-                        "— adversity and obstacles become the source of unexpected power."
+                        ". Adversity and obstacles become the source of unexpected power."
                     ),
                     "planets": [lord_of_trik],
                     "quality": "mixed"
@@ -497,7 +497,7 @@ def detect_yogas(chart: dict) -> list[dict]:
         yogas.append({
             "name": "Kemadruma Bhanga (isolation cancelled)",
             "description": (
-                "Nothing flanks the Moon, but the isolation is cancelled — "
+                "Nothing flanks the Moon, but the isolation is cancelled: "
                 + "; ".join(bhanga) +
                 ". The feeling of being alone is real; the fact of it is not."
             ),
@@ -513,20 +513,20 @@ def detect_yogas(chart: dict) -> list[dict]:
     if second_tenants and twelfth_tenants:
         yogas.append({
             "name": "Durudhara Yoga",
-            "description": ("Planets on both sides of the Moon — support arrives from "
+            "description": ("Planets on both sides of the Moon. Support arrives from "
                             "both directions and is rarely noticed as support."),
             "planets": ["Moon"] + second_tenants + twelfth_tenants,
             "quality": "benefic"})
     elif second_tenants:
         yogas.append({
             "name": "Sunapha Yoga",
-            "description": ("Planets in the 2nd from Moon — self-made resources, "
+            "description": ("Planets in the 2nd from Moon. Self-made resources, "
                             "earned rather than given."),
             "planets": ["Moon"] + second_tenants, "quality": "benefic"})
     elif twelfth_tenants:
         yogas.append({
             "name": "Anapha Yoga",
-            "description": ("Planets in the 12th from Moon — spends on image and "
+            "description": ("Planets in the 12th from Moon. Spends on image and "
                             "comfort, well before the money exists."),
             "planets": ["Moon"] + twelfth_tenants, "quality": "benefic"})
 
@@ -541,7 +541,7 @@ def detect_yogas(chart: dict) -> list[dict]:
     lord_10 = lords[10]
     if lord_9 == lord_10:
         yogas.append({
-            "name": f"Yogakaraka — {lord_9}",
+            "name": f"Yogakaraka: {lord_9}",
             "description": (
                 f"{lord_9} rules both H9 and H10 for this lagna, so one planet carries "
                 f"both purpose and profession. It sits in H{h(lord_9)}"
@@ -556,7 +556,7 @@ def detect_yogas(chart: dict) -> list[dict]:
         yogas.append({
             "name": "Dharma-Karmadhipati Yoga",
             "description": (
-                f"9th lord ({lord_9}) and 10th lord ({lord_10}) conjunct in H{h(lord_9)} — "
+                f"9th lord ({lord_9}) and 10th lord ({lord_10}) conjunct in H{h(lord_9)}. "
                 "purpose and career are the same project."
             ),
             "planets": [lord_9, lord_10],
@@ -566,7 +566,7 @@ def detect_yogas(chart: dict) -> list[dict]:
         yogas.append({
             "name": "Dharma-Karmadhipati Yoga (Exchange)",
             "description": (
-                f"9th lord ({lord_9}) and 10th lord ({lord_10}) exchange signs — "
+                f"9th lord ({lord_9}) and 10th lord ({lord_10}) exchange signs. "
                 "powerful alignment of purpose and profession."
             ),
             "planets": [lord_9, lord_10],
@@ -603,10 +603,10 @@ def detect_yogas(chart: dict) -> list[dict]:
                 continue
             seen_raja.add(key)
             yogas.append({
-                "name": f"Raja Yoga — {p1} + {p2}",
+                "name": f"Raja Yoga: {p1} + {p2}",
                 "description": (
                     f"{p1} (rules H{owns(p1)}) and {p2} (rules H{owns(p2)}) conjunct in "
-                    f"H{h(p1)} — a kendra lord and a trikona lord meeting."
+                    f"H{h(p1)}. A kendra lord and a trikona lord meeting."
                 ),
                 "planets": [p1, p2],
                 "quality": "benefic"
@@ -623,10 +623,10 @@ def detect_yogas(chart: dict) -> list[dict]:
                 is_maha = (h1 in KENDRA | TRIKONA) and (h2 in KENDRA | TRIKONA)
                 yoga_name = "Maha Parivartana Yoga" if is_maha else "Parivartana Yoga"
                 yogas.append({
-                    "name": f"{yoga_name} — {p1} ↔ {p2} (H{h1} ↔ H{h2})",
+                    "name": f"{yoga_name}: {p1} and {p2} swap (H{h1}, H{h2})",
                     "description": (
                         f"{p1} in {SIGNS[p1_sign]} (H{h1}) exchanges signs with "
-                        f"{p2} in {SIGNS[p2_sign]} (H{h2}) — the two houses merge; "
+                        f"{p2} in {SIGNS[p2_sign]} (H{h2}). The two houses merge, "
                         "neither area of life can be fixed without the other."
                     ),
                     "planets": [p1, p2],
@@ -640,7 +640,7 @@ def detect_yogas(chart: dict) -> list[dict]:
         if h(planet) in KENDRA and (s(planet) in OWN_SIGNS[planet]
                                     or s(planet) == EXALT_SIGN[planet]):
             yogas.append({
-                "name": f"{yname} Yoga (Pancha Mahapurusha) — {planet}",
+                "name": f"{yname} Yoga (Pancha Mahapurusha): {planet}",
                 "description": (
                     f"{planet} strong in {SIGNS[s(planet)]} in kendra H{h(planet)}: "
                     f"{flavour}. This is a defining trait, not a subtle one."
@@ -674,7 +674,7 @@ def detect_yogas(chart: dict) -> list[dict]:
         yogas.append({
             "name": "Shakata Yoga",
             "description": (
-                f"Moon sits {moon_from_jup}th from Jupiter — fortune arrives and leaves "
+                f"Moon sits {moon_from_jup}th from Jupiter. Fortune arrives and leaves "
                 "in cycles. Every rise is followed by a dip they did not budget for."
             ),
             "planets": ["Moon", "Jupiter"],
@@ -693,7 +693,7 @@ def detect_yogas(chart: dict) -> list[dict]:
                 continue
             label, flavour = named
             yogas.append({
-                "name": f"{label} — {p1} + {p2} (H{h(p1)})",
+                "name": f"{label}: {p1} + {p2} (H{h(p1)})",
                 "description": f"{p1} and {p2} share {SIGNS[s(p1)]} in H{h(p1)}: {flavour}.",
                 "planets": [p1, p2],
                 "quality": "challenging" if label not in
@@ -761,7 +761,7 @@ def format_yoga_block_roast(yogas: list[dict]) -> str:
 
     order = {"challenging": 0, "mixed": 1, "benefic": 2}
     tag   = {"challenging": "HARD", "mixed": "MIXED", "benefic": "GIFT"}
-    lines = ["YOGAS — combinations active in this chart",
+    lines = ["YOGAS (combinations active in this chart)",
              "(HARD and MIXED are the useful ones. A GIFT is only funny when it "
              "is being wasted.)"]
     for y in sorted(yogas, key=lambda x: order.get(x["quality"], 3)):
@@ -820,7 +820,7 @@ def format_transit_block(chart: dict, query_date: datetime) -> str:
         press = saturn_pressure(d1["Moon"]["sign_idx"], tr["Saturn"]["sign_idx"])
         if press:
             lines.append(
-                f"*** {press['name'].upper()} IS RUNNING — {press['phase']}. "
+                f"*** {press['name'].upper()} IS RUNNING, {press['phase']}. "
                 f"{press['meaning']}. This is the loudest thing in their life "
                 f"right now and they may not have a name for it. ***"
             )
@@ -829,7 +829,7 @@ def format_transit_block(chart: dict, query_date: datetime) -> str:
             t = tr[p]
             house = (t["sign_idx"] - asc_idx) % 12 + 1
             natal = d1[p]["house"]
-            lines.append(f"  transit {p}: {t['sign']} — crossing their H{house} "
+            lines.append(f"  transit {p}: {t['sign']}, crossing their H{house} "
                          f"(natal {p} sits in H{natal})")
 
         # Any transit sitting on a natal planet's sign is worth naming.
@@ -853,7 +853,7 @@ def format_karaka_block(chart: dict) -> str:
     ks = jaimini_karakas(chart)
     if not ks:
         return ""
-    lines = ["SOUL SIGNATURE (Jaimini karakas — strongest first)"]
+    lines = ["SOUL SIGNATURE (Jaimini karakas, strongest first)"]
     for k in ks[:3]:
         d1 = chart["d1"][k["planet"]]
         flags = []
@@ -943,7 +943,13 @@ NEVER
 Never narrate the format. Never explain the joke.
 - Do not repeat the same insight in two different points.
 
-OUTPUT — return ONLY valid JSON. No markdown fences, no preamble, no text \
+EM DASHES AND EN DASHES ALLOWED: ZERO. Never use the characters '-' in their \
+long forms anywhere in the output. Where you would reach for one, end the \
+sentence and start a new one, or use a comma, a colon or brackets. Short \
+sentences are funnier than long ones held together with punctuation, so this \
+rule costs you nothing. A hyphen inside a compound word is fine.
+
+OUTPUT. Return ONLY valid JSON. No markdown fences, no preamble, no text \
 after the closing brace.
 {
   "cosmic_title": "4-7 words, brutally accurate, summarises their whole deal",
@@ -975,14 +981,14 @@ INTENSITY_BLOCK = {
     "Spicy": (
         "INTENSITY: SPICY. The default. Sharp, deadpan, genuinely funny at "
         "their expense. Name the self-sabotage plainly. No comfort, but no "
-        "cruelty either — every line should be something they would forward "
+        "cruelty either. Every line should be something they would forward "
         "to a friend with 'ok this is too accurate'."
     ),
     "No Mercy": (
         "INTENSITY: NO MERCY. Go for the throat. Name the delusion they are "
         "actively maintaining, the excuse they have used for years, and the "
         "thing they are pretending not to know about themselves. Still funny, "
-        "still true, still no cruelty for its own sake — but no exit either. "
+        "still true, still no cruelty for its own sake, but no exit either. "
         "They asked for this."
     ),
 }
@@ -1058,7 +1064,7 @@ def build_roast_system_prompt(
         )
 
     evidence = "\n\n".join(filter(None, [
-        "═══ EVIDENCE — for you to read, never to quote ═══",
+        "=== EVIDENCE. For you to read, never to quote ===",
         person_block,
         "BIRTH CHART",
         chart_block,
@@ -1067,7 +1073,7 @@ def build_roast_system_prompt(
         dasha_block,
         transit_block,
         yoga_block,
-        "═══ SETTINGS FOR THIS ROAST ═══",
+        "=== SETTINGS FOR THIS ROAST ===",
         INTENSITY_BLOCK.get(intensity, INTENSITY_BLOCK["Spicy"]),
         language_note.rstrip() + dom_note,
         "Now write it. 8 to 10 patterns. Valid JSON only, nothing before or "
