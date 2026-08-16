@@ -446,7 +446,7 @@ def saturn_pressure(natal_moon_sign_idx: int, transit_saturn_sign_idx: int) -> d
 # travelled into their sign. Highest degree = Atmakaraka, the soul's headline
 # obsession. This is the seven-karaka scheme (Rahu excluded).
 _KARAKA_LABELS = [
-    ("Atmakaraka",   "the self — the one thing this person cannot stop being about"),
+    ("Atmakaraka",   "the self, the one thing this person cannot stop being about"),
     ("Amatyakaraka", "career and the people who advance it"),
     ("Bhratrikaraka", "siblings, courage, the risks they will and won't take"),
     ("Matrikaraka",  "mother, home, what comfort means to them"),
@@ -581,7 +581,7 @@ def _flags(p: dict) -> str:
     if p.get("debilitated"):  flags.append("Debilitated")
     if p.get("exalted"):      flags.append("Exalted")
     if p.get("vargottam"):    flags.append("Vargottam")
-    return " | ".join(flags) if flags else "—"
+    return " | ".join(flags) if flags else "none"
 
 
 def format_for_prompt(chart: dict) -> str:
@@ -609,7 +609,7 @@ def format_for_prompt(chart: dict) -> str:
     lines.append("━" * 40)
 
     # ── D1 ────────────────────────────────────────────────────────────────
-    lines.append("D1 PLACEMENTS — Physical Reality")
+    lines.append("D1 PLACEMENTS (physical reality)")
     header = f"  {'Planet':<9} {'Sign':<14} {'House':>5} {'Deg':>6} {'Nakshatra':<22} {'Flags'}"
     lines.append(header)
     lines.append("  " + "─" * 80)
@@ -631,7 +631,7 @@ def format_for_prompt(chart: dict) -> str:
     lines.append("━" * 40)
 
     # ── D9 ────────────────────────────────────────────────────────────────
-    lines.append("D9 NAVAMSA — Soul's True Path")
+    lines.append("D9 NAVAMSA (the soul's true path)")
     header9 = f"  {'Planet':<9} {'Sign':<14} {'House':>5}"
     lines.append(header9)
     lines.append("  " + "─" * 30)
@@ -644,7 +644,7 @@ def format_for_prompt(chart: dict) -> str:
     lines.append("━" * 40)
 
     # ── D10 ───────────────────────────────────────────────────────────────
-    lines.append("D10 DASAMSA — Career & Public Life")
+    lines.append("D10 DASAMSA (career and public life)")
     header10 = f"  {'Planet':<9} {'Sign':<14} {'House':>5}"
     lines.append(header10)
     lines.append("  " + "─" * 30)
