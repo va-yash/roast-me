@@ -65,7 +65,11 @@ const FORMSPREE_ID    = process.env.NEXT_PUBLIC_FORMSPREE_ID ?? "mqengjav";
 //   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 const SUPABASE_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_KEY    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-const COSMOS_CHAT_URL = "https://my-destiny-murex.vercel.app/";
+// 2026-08: was "https://my-destiny-murex.vercel.app/" — the raw Vercel
+// preview URL for Astra-Pal. A link that reads like a throwaway test deploy
+// is a link people do not click and never share, and this is the only route
+// from Roast-Me back to the paid product.
+const COSMOS_CHAT_URL = "https://myastrapal.com";
 
 /* ─── Supabase profile saver ─────────────────────────────────────────────────── */
 // Run this SQL in your Supabase dashboard first:
